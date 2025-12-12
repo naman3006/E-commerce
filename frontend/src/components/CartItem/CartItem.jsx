@@ -1,0 +1,74 @@
+// src/components/CartItem/CartItem.js
+import React from 'react';
+
+const CartItem = ({ item, onUpdate, onRemove }) => {
+  const itemId = item._id || item.id;
+
+  const handleQuantityChange = (qty) => {
+    if (itemId) {
+      onUpdate(itemId, qty);
+    }
+  };
+
+  const getImgSrc = () => {
+    // Check item.productId (populated from backend) as well as legacy checks
+    const product = item?.productId || item?.product;
+    const srcCandidate =
+      item?.image ||
+      item?.thumbnail ||
+      product?.thumbnail ||
+      (product?.images && product.images.length ? product.images[0] : null);
+
+    if (!srcCandidate) {
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect fill='%23f3f4f6' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='Arial' font-size='14'>No image</text></svg>`;
+      return `data:image/svg+xml;utf8,${svg}`;
+    }
+    let src = srcCandidate;
+    if (!/^https?:\/\//i.test(src)) {
+      if (!src.startsWith('/')) src = `/${src}`;
+    }
+    return src;
+  };
+
+  const product = item?.productId || item?.product;
+  const title = item.name || item.title || product?.title || "Unknown Product";
+
+  return (
+    <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+      <div className="flex items-center gap-4 flex-1">
+        <img src={getImgSrc()} alt={title} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-100" onError={(e) => { e.target.onerror = null; e.target.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect fill='%23f3f4f6' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='Arial' font-size='14'>No image</text></svg>`; }} />
+        <div>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2">{title}</h3>
+          <p className="text-primary-600 font-medium">₹{item.price}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 w-full sm:w-auto mt-2 sm:mt-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+        <div className="flex items-center space-x-3 bg-gray-50 rounded-lg p-1">
+          <button
+            onClick={() => handleQuantityChange(Math.max(1, item.quantity - 1))}
+            className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-primary-600 font-bold transition-colors"
+          >
+            -
+          </button>
+          <span className="w-8 text-center font-medium text-gray-900">{item.quantity}</span>
+          <button
+            onClick={() => handleQuantityChange(item.quantity + 1)}
+            className="w-8 h-8 flex items-center justify-center bg-white rounded shadow-sm text-gray-600 hover:text-primary-600 font-bold transition-colors"
+          >
+            +
+          </button>
+        </div>
+        <button
+          onClick={() => itemId && onRemove(itemId)}
+          className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors group"
+          title="Remove item"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default CartItem;

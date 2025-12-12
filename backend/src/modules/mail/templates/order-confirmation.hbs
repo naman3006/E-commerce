@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #4F46E5; color: white; padding: 20px; text-align: center; }
+        .content { background: #f9f9f9; padding: 20px; }
+        .order-details { background: white; padding: 15px; margin: 20px 0; border-radius: 5px; }
+        .item { border-bottom: 1px solid #eee; padding: 10px 0; }
+        .total { font-size: 20px; font-weight: bold; color: #4F46E5; margin-top: 20px; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        .button { background: #4F46E5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Confirmation</h1>
+        </div>
+        <div class="content">
+            <h2>Thank you for your order, {{customerName}}!</h2>
+            <p>We're excited to let you know that we've received your order and it's being processed.</p>
+            
+            <div class="order-details">
+                <h3>Order #{{orderId}}</h3>
+                <p><strong>Order Date:</strong> {{orderDate}}</p>
+                
+                <h4>Items Ordered:</h4>
+                {{#each items}}
+                <div class="item">
+                    <strong>{{this.productName}}</strong><br>
+                    Quantity: {{this.quantity}} × ${{this.price}}<br>
+                    Subtotal: ${{this.subtotal}}
+                </div>
+                {{/each}}
+                
+                <div class="total">
+                    Total: ${{total}}
+                </div>
+                
+                <h4>Shipping Address:</h4>
+                <p>
+                    {{shippingAddress.street}}<br>
+                    {{shippingAddress.city}}, {{shippingAddress.state}} {{shippingAddress.zipCode}}<br>
+                    {{shippingAddress.country}}
+                </p>
+            </div>
+            
+            <p>You'll receive another email when your order ships.</p>
+            
+            <a href="{{trackOrderUrl}}" class="button">Track Your Order</a>
+        </div>
+        <div class="footer">
+            <p>© 2025 E-Commerce. All rights reserved.</p>
+            <p>If you have any questions, please contact us at support@ecommerce.com</p>
+        </div>
+    </div>
+</body>
+</html>

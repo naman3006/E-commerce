@@ -1,0 +1,228 @@
+// src/App.js
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+
+// Layout Components
+import Layout from "./components/Layout/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+// Pages
+import Home from "./pages/Home";
+import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Orders from "./pages/Orders";
+import OrderDetails from "./pages/OrderDetails";
+import Profile from "./pages/Profile";
+import Addresses from "./pages/Addresses";
+import Wishlist from "./pages/Wishlist";
+import AdminDashboard from "./pages/AdminDashboard";
+import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import Register from "./pages/Register";
+import Notifications from "./pages/Notifications";
+import ProductManagement from "./pages/ProductManagement";
+import OrderManagement from "./pages/OrderManagement";
+import SellerOrders from "./pages/SellerOrders";
+import CategoryManagement from "./pages/CategoryManagement";
+import CouponManagement from "./components/CouponManagement/CouponManagement";
+import { getProfile } from "./store/slices/authSlice";
+
+// import { io } from "socket.io-client"; // Removed, using Context
+import { useSocket } from "./contexts/SocketContext";
+import { addNotification } from "./store/slices/notificationsSlice";
+import { toast, ToastContainer } from "react-toastify";
+
+const App = () => {
+  const dispatch = useDispatch();
+  const { token, user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (token && !user) {
+      // Fetch profile if we have a token but no user (page reload)
+      dispatch(getProfile());
+    }
+  }, [dispatch, token, user]);
+
+  /* 
+   * Socket logic is now handled in SocketContext.
+   * We can use the useSocket hook here if we need to listen for global events
+   * or just rely on the context to maintain the connection.
+   * For this implementation, we'll let SocketContext handle the connection,
+   * and components can use useSocket() to listen to specific events.
+   * 
+   * However, to keep the existing notification toast logic working globally:
+   */
+  const socket = useSocket();
+
+  useEffect(() => {
+    if (socket) {
+      const handleNotification = (notification) => {
+        // The notification object is sent directly, not wrapped in a payload property
+        dispatch(addNotification(notification));
+        toast.info(notification.message || "New notification");
+      };
+
+      socket.on("notification", handleNotification);
+
+      return () => {
+        socket.off("notification", handleNotification);
+      };
+    }
+  }, [socket, dispatch]);
+
+  return (
+    <div>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="products" element={<Products />} />
+          <Route
+            path="products/manage"
+            element={
+              <ProtectedRoute>
+                {(user?.role === "admin" || user?.role === "seller") ? (
+                  <ProductManagement />
+                ) : (
+                  <div className="text-center py-12">
+                    <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
+                    <p className="text-gray-600 mt-2">You don't have permission to access this page.</p>
+                  </div>
+                )}
+              </ProtectedRoute>
+            }
+          />
+          <Route path="products/:id" element={<ProductDetail />} />
+          <Route
+            path="cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="checkout"
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="orders"
+            element={
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="orders/:id"
+            element={
+              <ProtectedRoute>
+                <OrderDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="addresses"
+            element={
+              <ProtectedRoute>
+                <Addresses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="wishlist"
+            element={
+              <ProtectedRoute>
+                <Wishlist />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            }
+          />
+          {user?.role === "admin" && (
+            <>
+              <Route
+                path="admin/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/orders"
+                element={
+                  <ProtectedRoute>
+                    <OrderManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="categories/manage"
+                element={
+                  <ProtectedRoute>
+                    <CategoryManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/coupons"
+                element={
+                  <ProtectedRoute>
+                    <CouponManagement />
+                  </ProtectedRoute>
+                }
+              />
+            </>
+          )}
+          {user?.role === "seller" && (
+            <Route
+              path="seller/orders"
+              element={
+                <ProtectedRoute>
+                  <SellerOrders />
+                </ProtectedRoute>
+              }
+            />
+          )}
+          <Route path="login" element={token ? <Navigate to="/" /> : <Login />} />
+          <Route
+            path="register"
+            element={token ? <Navigate to="/" /> : <Register />}
+          />
+          <Route
+            path="forgot-password"
+            element={token ? <Navigate to="/" /> : <ForgotPassword />}
+          />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Route>
+
+      </Routes>
+      <ToastContainer />
+    </div>
+  );
+};
+
+export default App;

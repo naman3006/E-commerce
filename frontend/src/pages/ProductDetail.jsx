@@ -1,0 +1,227 @@
+// src/pages/ProductDetail.js
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+
+import ReviewCard from '../components/ReviewCard/ReviewCard';
+import { findOneProduct } from '../store/slices/productsSlice';
+import { createReview, findReviewsByProduct } from '../store/slices/reviewsSlice';
+import { addToWishlist } from '../store/slices/wishlistSlice';
+import { addToCart } from '../store/slices/cartSlice';
+import { toast } from 'react-toastify';
+
+const ProductDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { product, loading } = useSelector((state) => state.products);
+  const { reviews, loading: reviewsLoading } = useSelector((state) => state.reviews);
+  const { token } = useSelector((state) => state.auth);
+  const [quantity, setQuantity] = useState(1);
+  const [reviewText, setReviewText] = useState('');
+  const [rating, setRating] = useState(5);
+
+  useEffect(() => {
+    dispatch(findOneProduct(id));
+    dispatch(findReviewsByProduct(id));
+
+  }, [dispatch, id]);
+
+  // Normalize image source: prefer `thumbnail`, then first `images` entry, then placeholder.
+  const getImageSrc = () => {
+    const srcCandidate = product?.thumbnail || (product?.images && product.images.length ? product.images[0] : null);
+    if (!srcCandidate) {
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='400'><rect fill='%23f3f4f6' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='Arial' font-size='20'>No image</text></svg>`;
+      return `data:image/svg+xml;utf8,${svg}`;
+    }
+    let src = srcCandidate;
+    // If stored without protocol (relative path like "uploads/.."), ensure it starts with '/'
+    if (!/^https?:\/\//i.test(src)) {
+      if (!src.startsWith('/')) src = `/${src}`;
+    }
+    return src;
+  };
+
+  // Debug: log product image fields to browser console for inspection
+  React.useEffect(() => {
+    if (product) {
+      // eslint-disable-next-line no-console
+      console.debug('Product image fields', {
+        id: product._id || product.id,
+        thumbnail: product.thumbnail,
+        images: product.images,
+      });
+    }
+  }, [product]);
+
+  const handleAddToCart = () => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    dispatch(addToCart({ productId: id, quantity }));
+  };
+
+  const handleAddToWishlist = () => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    dispatch(addToWishlist(id));
+  };
+
+  const handleSubmitReview = (e) => {
+    e.preventDefault();
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    dispatch(createReview({ productId: id, comment: reviewText, rating }));
+    setReviewText('');
+    setRating(5);
+  };
+
+  if (loading || reviewsLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return <div className="text-center text-gray-500">Product not found</div>;
+  }
+
+  return (
+    <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
+        <div>
+          <img
+            src={getImageSrc()}
+            alt={product.title}
+            onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.jpg'; }}
+            className="w-full h-96 object-cover rounded-lg"
+          />
+        </div>
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold text-gray-900">{product.title}</h1>
+          <p className="text-gray-600 text-lg">{product.description}</p>
+          <div className="text-2xl font-semibold text-gray-900">₹{product.price}</div>
+
+          <div className="flex items-center space-x-4">
+            <label className="text-sm font-medium text-gray-700">Quantity:</label>
+            <input
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value)))}
+              className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={handleAddToCart}
+              className="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 transition-colors font-semibold"
+            >
+              Add to Cart
+            </button>
+            <button
+              onClick={handleAddToWishlist}
+              className="bg-gray-200 text-gray-700 px-6 py-3 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              Add to Wishlist
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Detailed Description & Specifications */}
+      <div className="p-8 border-t border-gray-200">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Long Description */}
+          <div className="lg:col-span-2 space-y-4">
+            <h2 className="text-2xl font-bold text-gray-900">Description</h2>
+            {product.longDescription ? (
+              <div
+                className="prose max-w-none text-gray-600"
+                dangerouslySetInnerHTML={{ __html: product.longDescription }}
+              />
+            ) : (
+              <p className="text-gray-500">No detailed description available.</p>
+            )}
+          </div>
+
+          {/* Specifications */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-gray-900">Specifications</h2>
+            {product.specifications && product.specifications.length > 0 ? (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <dl className="space-y-3">
+                  {product.specifications.map((spec, index) => (
+                    <div key={index} className="flex justify-between border-b border-gray-200 last:border-0 pb-2 last:pb-0">
+                      <dt className="text-sm font-medium text-gray-600">{spec.key}</dt>
+                      <dd className="text-sm font-semibold text-gray-900 text-right">{spec.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No specifications listed.</p>
+            )}
+            {/* Brand and SKU */}
+            <div className="bg-gray-50 rounded-lg p-4 mt-4">
+              <dl className="space-y-3">
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-gray-600">Brand</dt>
+                  <dd className="text-sm font-semibold text-gray-900 text-right">{product.brand || 'N/A'}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm font-medium text-gray-600">SKU</dt>
+                  <dd className="text-sm font-semibold text-gray-900 text-right">{product.sku || 'N/A'}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-8 border-t border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Reviews</h2>
+        <form onSubmit={handleSubmitReview} className="mb-8 p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center space-x-2 mb-4">
+            <span className="text-sm font-medium">Rating:</span>
+            {[5, 4, 3, 2, 1].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => setRating(star)}
+                className={`text-2xl ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+            placeholder="Write your review..."
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows="3"
+          />
+          <button
+            type="submit"
+            className="mt-4 bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors"
+          >
+            Submit Review
+          </button>
+        </form>
+        <div className="space-y-4">
+          {reviews.map((review) => (
+            <ReviewCard key={review.id} review={review} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProductDetail;
