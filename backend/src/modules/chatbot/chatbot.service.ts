@@ -13,7 +13,24 @@ import { CouponStatus } from '../coupons/schemas/coupon.schema';
 export class ChatbotService {
     private readonly logger = new Logger(ChatbotService.name);
     private genAI: GoogleGenerativeAI;
-    private model: any;
+
+    // Multi-Model Configuration
+    // Updated 2025-12-16: Includes Gemini 2.0, Experimental, and Gemma 3 variants
+    private readonly models = [
+        'gemini-2.0-flash-exp',                  // Experimental (Often has separate quota)
+        'gemini-exp-1206',                       // Experimental (High Capability)
+        'gemini-2.0-flash',                      // Primary: Fast & High Quality
+        'gemini-2.5-flash-lite-preview-09-2025', // User's original
+        'gemma-3-1b-it',                         // Gemma 3 (Verified Working!)
+        'gemma-3-4b-it',                         // Gemma 3 (Likely Working)
+        'gemma-3-27b-it',                        // Gemma 3 (High capability)
+        'gemini-flash-latest',                   // Stable Fallback
+        'gemini-pro-latest'                      // Reasoning Fallback
+    ];
+
+    // Simple In-Memory Cache: Map<UserQueryKey, {response: string, timestamp: number}>
+    private cache = new Map<string, { response: string, timestamp: number }>();
+    private readonly CACHE_TTL = 10 * 60 * 1000; // 10 Minutes
 
     constructor(
         private configService: ConfigService,
@@ -27,7 +44,6 @@ export class ChatbotService {
         const apiKey = this.configService.get<string>('GEMINI_API_KEY');
         if (apiKey) {
             this.genAI = new GoogleGenerativeAI(apiKey);
-            this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite-preview-09-2025' });
         } else {
             this.logger.warn('GEMINI_API_KEY not found. Chatbot will run in mock mode.');
         }
@@ -36,176 +52,162 @@ export class ChatbotService {
     async processMessage(userId: string, message: string, history: any[]) {
         try {
             this.logger.debug(`Processing message for user: ${userId}. Message: ${message}`);
-            // 1. Context Gathering
-            let context = `Current Date and Time: ${new Date().toLocaleString()}\n`;
-            const lowerMsg = message.toLowerCase();
 
-            // Check for Order Intent
-            if (lowerMsg.includes('order') || lowerMsg.includes('status') || lowerMsg.includes('tracking')) {
-                const orders = await this.ordersService.findMy(userId);
-                if (orders.length > 0) {
-                    const recentOrder = orders[0];
-                    context += `\nUser's most recent order: Order #${recentOrder._id} is currently ${recentOrder.orderStatus}. Total: $${recentOrder.totalAmount}. Placed on ${(recentOrder as any).createdAt}.`;
-                } else {
-                    context += `\nUser has no recent orders.`;
-                }
+            // 1. Check Cache
+            const cacheKey = `${userId}:${message.trim().toLowerCase()}`;
+            const cached = this.cache.get(cacheKey);
+            if (cached && (Date.now() - cached.timestamp < this.CACHE_TTL)) {
+                this.logger.debug('Returning cached response');
+                return { text: cached.response };
             }
 
-            // Product Context - Search based on user message
-            try {
-                // Search limit to 3 to keep context concise
-                const searchResults = await this.productsService.findAll({ search: message, limit: 3 } as any);
-                if (searchResults.products.length > 0) {
-                    const productDetails = searchResults.products.map(p =>
-                        `- ${p.title}: $${p.price} (${p.stockStatus}, ${p.stock} left) - Rating: ${p.rating}/5\n  Description: ${p.description.substring(0, 150)}...`
-                    ).join('\n');
-                    context += `\n\nRelevant Products found for your query:\n${productDetails}\n`;
+            // 2. Build Context
+            const context = await this.buildContext(userId, message);
+
+            // 3. LLM Interaction with Model Fallback
+            if (this.genAI) {
+                const mappedHistory = this.formatHistory(history);
+                const prompt = this.generatePrompt(context, message);
+
+                for (const modelName of this.models) {
+                    try {
+                        this.logger.debug(`Attempting generation with model: ${modelName}`);
+                        const model = this.genAI.getGenerativeModel({ model: modelName });
+
+                        const chat = model.startChat({
+                            history: mappedHistory,
+                            generationConfig: { maxOutputTokens: 500 },
+                        });
+
+                        const result = await chat.sendMessage(prompt);
+                        const response = result.response.text();
+
+                        // Cache the successful response
+                        this.cache.set(cacheKey, { response, timestamp: Date.now() });
+
+                        return { text: response };
+
+                    } catch (err) {
+                        const isQuotaError = err.message.includes('429') || err.message.includes('quota') || err.message.includes('Too Many Requests');
+                        if (isQuotaError) {
+                            this.logger.warn(`Model ${modelName} quota exceeded/failed. Trying next model...`);
+                            continue; // Try next model
+                        } else {
+                            // If it's not a quota error (e.g., bad request), throw it to stop trying
+                            this.logger.error(`Model ${modelName} error (non-quota): ${err.message}`);
+                            // Optional: depending on strategy, we could still try others, but let's assume other errors are fatal
+                            // actually, let's try others just in case specific model is down
+                            continue;
+                        }
+                    }
                 }
-            } catch (err) {
-                this.logger.warn(`Product search failed: ${err.message}`);
+
+                // If loop finishes without returning (All models failed)
+                this.logger.error('All 9 models (Gemini + Gemma) failed (Quota/Error). Switching to Rule-Based Fallback.');
+
+                // Graceful Degradation: Use the gathered context to answer directly
+                if (context.length > 50) { // arbitrary length to ensure we have real info
+                    return {
+                        text: `⚠️ **AI Brain Offline (Daily Quota Exceeded)**\n\nI couldn't generate a creative response, but I found this information for you:\n${context.replace('Current Date and Time:', '').trim()}`
+                    };
+                }
+
+                return { text: "I'm currently overloaded with requests (Daily Quota Exceeded). Please try again later." };
             }
 
-            // Cart Intent
-            try {
-                if (lowerMsg.includes('cart') || lowerMsg.includes('basket') || lowerMsg.includes('bag')) {
-                    this.logger.debug('Checking Cart...');
-                    const cart = await this.cartService.findOne(userId);
-                    if (cart && cart.items.length > 0) {
-                        const cartDetails = cart.items.map((item: any) =>
-                            `- ${item.productId.title}: $${item.price} (Qty: ${item.quantity})`
-                        ).join('\n');
-                        context += `\nUser's Cart (${cart.items.length} items, Total: $${cart.totalPrice}):\n${cartDetails}`;
-                    } else {
-                        context += `\nUser's Cart is empty.`;
-                    }
-                }
-            } catch (e) { this.logger.error(`Cart check failed: ${e.message}`); }
-
-            // Wishlist Intent
-            try {
-                if (lowerMsg.includes('wishlist') || lowerMsg.includes('saved')) {
-                    this.logger.debug('Checking Wishlist...');
-                    const wishlist = await this.wishlistService.findOne(userId);
-                    if (wishlist && wishlist.productIds.length > 0) {
-                        const wishItems = wishlist.productIds.map((p: any) => `- ${p.title}`).join('\n');
-                        context += `\nUser's Wishlist:\n${wishItems}`;
-                    } else {
-                        context += `\nUser's Wishlist is empty.`;
-                    }
-                }
-            } catch (e) { this.logger.error(`Wishlist check failed: ${e.message}`); }
-
-            // Coupon Intent
-            try {
-                if (lowerMsg.includes('coupon') || lowerMsg.includes('discount') || lowerMsg.includes('promo')) {
-                    this.logger.debug('Checking Coupons...');
-                    const coupons = await this.couponsService.findAll({ status: CouponStatus.ACTIVE, isActive: true });
-                    if (coupons.length > 0) {
-                        const couponList = coupons.map(c =>
-                            `- Code: ${c.code} (${c.discountType === 'percentage' ? c.discountValue + '%' : '$' + c.discountValue} OFF) - Min Purchase: $${c.minPurchaseAmount}`
-                        ).join('\n');
-                        context += `\nActive Coupons:\n${couponList}`;
-                    } else {
-                        context += `\nNo active coupons available right now.`;
-                    }
-                }
-            } catch (e) { this.logger.error(`Coupon check failed: ${e.message}`); }
-
-            // Profile Intent
-            try {
-                if (lowerMsg.includes('profile') || lowerMsg.includes('account') || lowerMsg.includes('who am i') || lowerMsg.includes('my details')) {
-                    this.logger.debug('Checking Profile...');
-                    const user = await this.usersService.findOne(userId);
-                    if (user) {
-                        context += `\nUser Profile: Name: ${user.name}, Email: ${user.email}. Joined: ${new Date((user as any).createdAt).toLocaleDateString()}`;
-                    }
-                }
-            } catch (e) { this.logger.error(`Profile check failed: ${e.message}`); }
-
-            // Check for Product/Recommendation Intent
-            if (lowerMsg.includes('recommend') || lowerMsg.includes('suggest') || lowerMsg.includes('buy') || lowerMsg.includes('looking for')) {
-                // Simple search extraction - in a real app, use an LLM or keyword extractor
-                // For now, let's just grab featured products as a fallback or search if specific keywords exist
-                const products = await this.productsService.getFeaturedProducts(5);
-                const productList = products.map(p => `- ${p.title}: $${p.price} (Rating: ${p.rating})`).join('\n');
-                context += `\nAvailable Featured Products:\n${productList}`;
-            }
-
-            // 2. LLM Interaction
-            if (this.model) {
-                const mappedHistory = history.map(h => ({
-                    role: h.sender === 'user' ? 'user' : 'model',
-                    parts: [{ text: h.text }]
-                }));
-
-                // Gemini requires history to start with 'user'
-                // If the first message is from 'model', remove it (it's likely the welcome message)
-                while (mappedHistory.length > 0 && mappedHistory[0].role === 'model') {
-                    mappedHistory.shift();
-                }
-
-                const chat = this.model.startChat({
-                    history: mappedHistory,
-                    generationConfig: {
-                        maxOutputTokens: 500,
-                    },
-                });
-
-                const prompt = `
-        You are a friendly and knowledgeable AI Shopping Assistant for this E-commerce store.
-        Your goal is to help users find products, track orders, manage their account, and save money.
-
-        Use the following context to answer the user's question accurately:
-        ${context}
-        
-        Guidelines:
-        - If the user asks about their cart, wishlist, or orders, use the provided context.
-        - If the user asks for coupons, list the active codes.
-        - If suggesting products, mention their rating and price.
-        - Be concise, professional, and helpful. 
-        - If you don't know something, suggest they check the specific page (e.g., "Please check the Orders page").
-
-        User: ${message}
-        `;
-
-                try {
-                    const result = await this.retryWithBackoff(async () => {
-                        return await chat.sendMessage(prompt);
-                    });
-                    const response = await result.response;
-                    return { text: response.text() };
-                } catch (retryError) {
-                    this.logger.error(`Failed to get response after retries: ${retryError.message}`);
-                    const fallbackMessage = context
-                        ? `I'm currently overloaded with requests, but here is some information I found:\n${context}`
-                        : "I'm currently overloaded with requests and couldn't process your specific question. Please try again later.";
-                    return { text: fallbackMessage };
-                }
-            }
-
-            // 3. Fallback / Mock Mode
+            // 4. Mock Mode (No API Key)
             return {
-                text: `(Mock AI) I see you're asking about "${message}". \n\nContext found: ${context || 'None'}. \n\nTo get real AI responses, please add GEMINI_API_KEY to your .env file.`
+                text: `(Mock AI) Context gathered: ${context.length} chars. Add GEMINI_API_KEY to use real AI.`
             };
 
         } catch (error) {
-            this.logger.error(`Chatbot error: ${error.message}`, error.stack);
-            return { text: "I'm having trouble connecting to my brain right now. Please try again later." };
+            this.logger.error(`Chatbot critical error: ${error.message}`, error.stack);
+            return { text: "I'm having trouble connecting to the server. Please try again later." };
         }
     }
 
-    private async retryWithBackoff<T>(operation: () => Promise<T>, retries: number = 3, delay: number = 1000): Promise<T> {
-        try {
-            return await operation();
-        } catch (error) {
-            const errorMsg = error.message.toLowerCase();
-            if (retries > 0 && (errorMsg.includes('429') || errorMsg.includes('too many requests') || errorMsg.includes('quota'))) {
-                this.logger.warn(`Rate limited. Retrying in ${delay}ms... (${retries} retries left)`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return this.retryWithBackoff(operation, retries - 1, delay * 2);
-            } else {
-                throw error;
-            }
+    private formatHistory(history: any[]) {
+        const mapped = history.map(h => ({
+            role: h.sender === 'user' ? 'user' : 'model',
+            parts: [{ text: h.text }]
+        }));
+        // Remove leading 'model' messages as Gemini requires user start
+        while (mapped.length > 0 && mapped[0].role === 'model') {
+            mapped.shift();
         }
+        return mapped;
+    }
+
+    private generatePrompt(context: string, message: string): string {
+        return `
+        You are a smart, friendly, and helpful AI Shopping Assistant.
+        Current Context:
+        ${context}
+        
+        Guidelines:
+        - Answer based on the context provided.
+        - Be concise and polite.
+        - If suggesting products, mention price and availability.
+        - If you don't know, suggest where to look.
+
+        User Question: ${message}
+        `;
+    }
+
+    private async buildContext(userId: string, message: string): Promise<string> {
+        let context = `Current Date: ${new Date().toLocaleString()}\n`;
+        const lowerMsg = message.toLowerCase();
+
+        try {
+            // Parallel context gathering could be faster, but sequential is safer for error isolation
+
+            // Orders
+            if (lowerMsg.includes('order') || lowerMsg.includes('status')) {
+                const orders = await this.ordersService.findMy(userId);
+                context += orders.length > 0
+                    ? `\nLast Order: #${orders[0]._id} is ${orders[0].orderStatus} ($${orders[0].totalAmount}).`
+                    : `\nNo recent orders found.`;
+            }
+
+            // Cart
+            if (lowerMsg.includes('cart') || lowerMsg.includes('bag')) {
+                const cart = await this.cartService.findOne(userId);
+                context += (cart && cart.items.length)
+                    ? `\nCart: ${cart.items.length} items, Total $${cart.totalPrice}.`
+                    : `\nCart is empty.`;
+            }
+
+            // Wishlist
+            if (lowerMsg.includes('wishlist') || lowerMsg.includes('save')) {
+                const wishlists = await this.wishlistService.findAll(userId);
+                const w = wishlists[0];
+                context += (w && w.productIds.length)
+                    ? `\nWishlist '${w.name}': ${w.productIds.length} items.`
+                    : `\nWishlist is empty.`;
+            }
+
+            // Coupons
+            if (lowerMsg.includes('coupon') || lowerMsg.includes('code')) {
+                const coupons = await this.couponsService.findAll({ status: CouponStatus.ACTIVE, isActive: true });
+                context += coupons.length
+                    ? `\nCoupons: ${coupons.map(c => c.code).join(', ')}.`
+                    : `\nNo active coupons.`;
+            }
+
+            // Product Search (Always try if message is long enough, or explicit intent)
+            if (message.length > 3) {
+                const search = await this.productsService.findAll({ search: message, limit: 3 } as any);
+                if (search.products.length > 0) {
+                    context += `\nProducts found:\n` + search.products.map(p =>
+                        `- ${p.title} ($${p.price})`
+                    ).join('\n');
+                }
+            }
+
+        } catch (e) {
+            this.logger.warn(`Context building partial failure: ${e.message}`);
+        }
+
+        return context;
     }
 }

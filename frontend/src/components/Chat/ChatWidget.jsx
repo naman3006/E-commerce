@@ -22,9 +22,13 @@ const ChatWidget = () => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isOpen]);
 
-    const handleSend = async () => {
-        if (!input.trim()) return;
-        const userMsg = { id: Date.now().toString(), text: input, sender: 'user' };
+    const handleSend = async (messageText = null) => {
+        // Use provided text or fall back to input state
+        const textToSend = typeof messageText === 'string' ? messageText : input;
+
+        if (!textToSend.trim()) return;
+
+        const userMsg = { id: Date.now().toString(), text: textToSend, sender: 'user' };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setIsTyping(true);
@@ -42,11 +46,7 @@ const ChatWidget = () => {
                 const res = await api.post('/chatbot/message', { message: userMsg.text, history });
                 response = res.data.data;
             } else {
-                // Basic response for guests (or mock if no backend endpoint yet)
-                // NOTE: Since we implemented the endpoint with AuthGuard, guest access might fail.
-                // For now, let's assume this widget is primarily for logged-in users, 
-                // or we should relax the guard.
-                // Let's try to call it anyway, api interceptor handles token.
+                // Basic response for guests
                 const res = await api.post('/chatbot/message', { message: userMsg.text, history });
                 response = res.data.data;
             }
@@ -144,6 +144,21 @@ const ChatWidget = () => {
 
                             {/* Input Area */}
                             <div className="p-3 bg-white border-t border-gray-100">
+                                {/* Suggested Actions */}
+                                {messages.length < 3 && (
+                                    <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
+                                        {['Track Order', 'My Cart', 'Active Coupons'].map((action) => (
+                                            <button
+                                                key={action}
+                                                onClick={() => handleSend(action)}
+                                                className="whitespace-nowrap px-3 py-1 bg-indigo-50 text-indigo-600 text-xs font-semibold rounded-full border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                                            >
+                                                {action}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
                                 <TextField
                                     fullWidth
                                     placeholder="Type a message..."

@@ -4,6 +4,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
 import logo from '../../assets/LOGO2.jpeg';
 import useVoiceSearch from '../../hooks/useVoiceSearch';
+import LanguageSwitcher from '../LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 const Navbar = () => {
     const dispatch = useDispatch();
@@ -11,6 +13,7 @@ const Navbar = () => {
     const { user, token } = useSelector((state) => state.auth);
     const { cart } = useSelector((state) => state.cart);
     const { notifications } = useSelector((state) => state.notifications);
+    const { t } = useTranslation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -38,23 +41,24 @@ const Navbar = () => {
     };
 
     const navLinks = [
-        { name: 'Products', path: '/products' },
+        { name: t('navbar.shop') || 'Products', path: '/products' },
     ];
 
     const authLinks = [
-        { name: `Cart (${cartCount})`, path: '/cart', badge: cartCount > 0 },
-        { name: 'Rewards', path: '/rewards' },
-        { name: 'Wishlist', path: '/wishlist' },
-        { name: 'Orders', path: '/orders' },
+        { name: `${t('navbar.cart') || 'Cart'} (${cartCount})`, path: '/cart', badge: cartCount > 0 },
+        { name: t('navbar.rewards') || 'Rewards', path: '/rewards' },
+        { name: t('navbar.wishlist') || 'Wishlist', path: '/wishlist' },
+        { name: t('navbar.orders') || 'Orders', path: '/orders' },
     ];
 
     const adminLinks = [
-        { name: 'Dashboard', path: '/admin/dashboard' },
-        { name: 'Orders', path: '/admin/orders' },
-        { name: 'Products', path: '/products/manage' },
-        { name: 'Categories', path: '/categories/manage' },
-        { name: 'Coupons', path: '/admin/coupons' },
+        { name: t('navbar.dashboard') || 'Dashboard', path: '/admin/dashboard' },
+        { name: t('navbar.orders') || 'Orders', path: '/admin/orders' },
+        { name: t('navbar.products') || 'Products', path: '/products/manage' },
+        { name: t('navbar.categories') || 'Categories', path: '/categories/manage' },
+        { name: t('navbar.coupons') || 'Coupons', path: '/admin/coupons' },
     ];
+
 
     return (
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-soft transition-all duration-300">
@@ -173,6 +177,9 @@ const Navbar = () => {
                                     </div>
                                 )}
 
+                                {/* Language Switcher */}
+                                <LanguageSwitcher />
+
                                 {/* Notifications */}
                                 <Link
                                     to="/notifications"
@@ -228,11 +235,12 @@ const Navbar = () => {
 
                         {!token && (
                             <div className="flex items-center space-x-4">
+                                <LanguageSwitcher />
                                 <Link to="/login" className="text-gray-600 hover:text-primary-600 font-medium transition-colors">
-                                    Login
+                                    {t('common.login')}
                                 </Link>
                                 <Link to="/register" className="bg-primary-600  px-5 py-2.5 rounded-full hover:bg-primary-700 transition-all shadow-lg shadow-primary-500/30 hover:shadow-primary-500/40 font-medium">
-                                    Register
+                                    {t('common.register')}
                                 </Link>
                             </div>
                         )}
@@ -297,6 +305,10 @@ const Navbar = () => {
                                                 <p className="text-xs text-gray-500">{user.email}</p>
                                             </div>
                                         </Link>
+                                        <div className="px-4 py-2 flex items-center justify-between">
+                                            <span className="text-gray-600">Language</span>
+                                            <LanguageSwitcher />
+                                        </div>
                                         <button
                                             onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
                                             className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 mt-2"

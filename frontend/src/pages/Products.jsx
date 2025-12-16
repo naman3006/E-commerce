@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from 'react-i18next';
 import {
   findAllProducts,
   selectAllProducts,
@@ -21,6 +22,7 @@ import { useSearchParams } from "react-router-dom";
 
 const Products = () => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Redux selectors
@@ -150,9 +152,9 @@ const Products = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 font-display tracking-tight">Discover Products</h1>
+          <h1 className="text-4xl font-bold text-gray-900 font-display tracking-tight">{t('products.title')}</h1>
           <p className="text-gray-500 mt-2 text-lg">
-            Explore our curated collection of {pagination.totalProducts} items
+            {t('products.subtitle', { count: pagination.totalProducts })}
           </p>
         </div>
       </div>
@@ -162,7 +164,7 @@ const Products = () => {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900 font-display flex items-center gap-2">
             <svg className="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-            Refine Selection
+            {t('products.refine_selection')}
           </h2>
           <button
             onClick={() => {
@@ -180,18 +182,18 @@ const Products = () => {
             }}
             className="text-sm text-primary-600 hover:text-primary-700 font-medium hover:underline transition-colors"
           >
-            Clear all filters
+            {t('products.clear_filters')}
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Search Filter */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Search</label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('products.search_label')}</label>
             <div className="relative">
               <input
                 type="text"
-                placeholder={isListening ? "Listening..." : "Search products..."}
+                placeholder={isListening ? "Listening..." : t('products.search_placeholder')}
                 value={isListening ? (interimTranscript || transcript) : searchTerm}
                 onChange={(e) => handleFilterChange("search", e.target.value)}
                 className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none ${isListening ? 'placeholder-red-400' : ''}`}
@@ -211,13 +213,13 @@ const Products = () => {
 
           {/* Category Filter */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('products.category_label')}</label>
             <select
               value={filters.category}
               onChange={(e) => handleFilterChange("category", e.target.value)}
               className="w-full px-4 py-2.5 bg-gray-50 border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none appearance-none cursor-pointer"
             >
-              <option value="">All Categories</option>
+              <option value="">{t('products.all_categories')}</option>
               {categories?.map((cat) => (
                 <option key={cat._id} value={cat._id}>{cat.name}</option>
               ))}
@@ -226,11 +228,11 @@ const Products = () => {
 
           {/* Price Range */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Price Range</label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('products.price_range_label')}</label>
             <div className="flex gap-2">
               <input
                 type="number"
-                placeholder="Min"
+                placeholder={t('products.min_placeholder')}
                 value={filters.minPrice}
                 onChange={(e) => handleFilterChange("minPrice", e.target.value)}
                 className="w-full px-4 py-2.5 bg-gray-50 border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
@@ -239,7 +241,7 @@ const Products = () => {
               <span className="text-gray-400 self-center">-</span>
               <input
                 type="number"
-                placeholder="Max"
+                placeholder={t('products.max_placeholder')}
                 value={filters.maxPrice}
                 onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
                 className="w-full px-4 py-2.5 bg-gray-50 border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
@@ -250,25 +252,25 @@ const Products = () => {
 
           {/* Sort By */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Sort By</label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('products.sort_by_label')}</label>
             <div className="flex gap-2">
               <select
                 value={filters.sortBy}
                 onChange={(e) => handleFilterChange("sortBy", e.target.value)}
                 className="w-2/3 px-4 py-2.5 bg-gray-50 border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none cursor-pointer"
               >
-                <option value="createdAt">Newest</option>
-                <option value="price">Price</option>
-                <option value="rating">Rating</option>
-                <option value="soldCount">Popularity</option>
+                <option value="createdAt">{t('products.sort_newest')}</option>
+                <option value="price">{t('products.sort_price')}</option>
+                <option value="rating">{t('products.sort_rating')}</option>
+                <option value="soldCount">{t('products.sort_popularity')}</option>
               </select>
               <select
                 value={filters.sortOrder}
                 onChange={(e) => handleFilterChange("sortOrder", e.target.value)}
                 className="w-1/3 px-4 py-2.5 bg-gray-50 border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none cursor-pointer"
               >
-                <option value="desc">Desc</option>
-                <option value="asc">Asc</option>
+                <option value="desc">{t('products.sort_desc')}</option>
+                <option value="asc">{t('products.sort_asc')}</option>
               </select>
             </div>
           </div>
@@ -281,8 +283,8 @@ const Products = () => {
           <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           </div>
-          <p className="text-gray-900 text-lg font-medium">No products found</p>
-          <p className="text-gray-500 mt-1 max-w-sm mx-auto">We couldn't find any items matching your filters. Try adjusting your search or range.</p>
+          <p className="text-gray-900 text-lg font-medium">{t('products.no_products')}</p>
+          <p className="text-gray-500 mt-1 max-w-sm mx-auto">{t('products.no_products_desc')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -305,7 +307,7 @@ const Products = () => {
       {pagination.totalPages > 1 && (
         <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-soft border border-gray-100 gap-4">
           <span className="text-gray-600 font-medium text-sm text-center sm:text-left">
-            Page {pagination.currentPage} of {pagination.totalPages}
+            {t('products.page', { current: pagination.currentPage, total: pagination.totalPages })}
           </span>
           <div className="flex gap-3 w-full sm:w-auto justify-center">
             <button
@@ -313,14 +315,14 @@ const Products = () => {
               disabled={pagination.currentPage === 1}
               className="px-5 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 hover:text-primary-600 disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-gray-400 transition-colors flex-1 sm:flex-initial"
             >
-              Previous
+              {t('products.previous')}
             </button>
             <button
               onClick={() => handleFilterChange("page", Math.min(pagination.totalPages, pagination.currentPage + 1))}
               disabled={pagination.currentPage === pagination.totalPages}
               className="px-5 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 hover:text-primary-600 disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-gray-400 transition-colors flex-1 sm:flex-initial"
             >
-              Next
+              {t('products.next')}
             </button>
           </div>
         </div>

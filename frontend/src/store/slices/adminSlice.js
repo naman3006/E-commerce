@@ -9,7 +9,7 @@ export const getDashboard = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     try {
       const { auth } = getState();
-      const response = await axios.get(`${API_BASE}/admin/dashboard`, {
+      const response = await axios.get(`${API_BASE}/analytics/dashboard`, {
         headers: { Authorization: `Bearer ${auth.token}` },
       });
       return response.data;

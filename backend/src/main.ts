@@ -3,6 +3,7 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { I18nValidationExceptionFilter, i18nValidationErrorFactory } from 'nestjs-i18n';
 
 import { AppModule } from './app.module';
 import { TransFormInterceptor } from './common/interceptors/transform.interceptor';
@@ -30,15 +31,15 @@ async function bootstrap() {
       whitelist: false,
       forbidNonWhitelisted: false,
       transform: true,
-      exceptionFactory: (errors) => {
-        console.error('Validation Errors:', JSON.stringify(errors, null, 2));
-        return new BadRequestException(errors);
-      },
+      exceptionFactory: i18nValidationErrorFactory,
     }),
   );
 
   app.useGlobalInterceptors(new TransFormInterceptor());
-  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(
+    new HttpExceptionFilter(),
+    new I18nValidationExceptionFilter({ detailedErrors: false }),
+  );
 
   const port = app.get(ConfigService).get<number>('PORT') || 3000;
 

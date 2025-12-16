@@ -11,8 +11,11 @@ import { createOrder } from "../store/slices/ordersSlice";
 import { clearCart } from "../store/slices/cartSlice";
 import { toast } from "react-toastify";
 
+import { useTranslation } from 'react-i18next';
+
 const Checkout = () => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { cart, discountAmount, coupon } = useSelector((state) => state.cart);
   const { addresses, loading: addressesLoading } = useSelector(
@@ -88,11 +91,11 @@ const Checkout = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
+      <h1 className="text-3xl font-bold text-gray-900">{t('checkout.title')}</h1>
 
       {/* Address Selection */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('checkout.shipping_address')}</h2>
         {addressesLoading ? (
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         ) : (
@@ -101,7 +104,7 @@ const Checkout = () => {
             onChange={(e) => setSelectedAddress(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">Select Address</option>
+            <option value="">{t('checkout.select_address')}</option>
             {addresses.map((addr) => (
               <option key={addr._id} value={addr._id}>
                 {addr.street}, {addr.city}, {addr.zipCode}
@@ -113,13 +116,13 @@ const Checkout = () => {
           to="/addresses"
           className="text-blue-500 hover:underline mt-2 inline-block"
         >
-          Add New Address
+          {t('checkout.add_address')}
         </Link>
       </div>
 
       {/* Order Summary */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('checkout.order_summary')}</h2>
         <ul className="space-y-2">
           {cart.items.map((item) => (
             <li key={item._id} className="flex justify-between">
@@ -132,27 +135,27 @@ const Checkout = () => {
         </ul>
         <div className="border-t pt-4 mt-4 space-y-2">
           <div className="flex justify-between text-gray-600">
-            <span>Subtotal:</span>
+            <span>{t('cart.subtotal')}:</span>
             <span>₹{subtotal.toFixed(2)}</span>
           </div>
           {discountAmount > 0 && (
             <div className="flex justify-between text-green-600">
-              <span>Discount:</span>
+              <span>{t('cart.discount')}:</span>
               <span>-₹{discountAmount.toFixed(2)}</span>
             </div>
           )}
           <div className="flex justify-between text-gray-600">
-            <span>Shipping:</span>
+            <span>{t('cart.shipping')}:</span>
             <span>
               {shippingCost === 0 ? (
-                <span className="text-green-600">Free</span>
+                <span className="text-green-600">{t('cart.free')}</span>
               ) : (
                 <span>₹{shippingCost.toFixed(2)}</span>
               )}
             </span>
           </div>
           <div className="flex justify-between font-bold text-lg pt-2 border-t">
-            <span>Total:</span>
+            <span>{t('cart.total')}:</span>
             <span>₹{total.toFixed(2)}</span>
           </div>
         </div>
@@ -160,14 +163,14 @@ const Checkout = () => {
 
       {/* Payment */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('checkout.payment_method')}</h2>
         <select
           value={paymentMethod}
           onChange={(e) => setPaymentMethod(e.target.value)}
           className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="card">Credit Card</option>
-          <option value="paypal">PayPal</option>
+          <option value="card">{t('checkout.credit_card')}</option>
+          <option value="paypal">{t('checkout.paypal')}</option>
         </select>
       </div>
 
@@ -175,7 +178,7 @@ const Checkout = () => {
         onClick={handlePlaceOrder}
         className="w-full bg-green-500 text-white py-4 rounded-md hover:bg-green-600 transition-colors font-semibold text-lg"
       >
-        Place Order
+        {t('checkout.place_order')}
       </button>
     </div>
   );

@@ -8,6 +8,15 @@ export class Wishlist {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
+  @Prop({ default: 'My Wishlist' })
+  name: string;
+
+  @Prop({ enum: ['private', 'public'], default: 'private' })
+  privacy: string;
+
+  @Prop({ unique: true, sparse: true })
+  shareToken: string;
+
   @Prop({ type: [Types.ObjectId], ref: 'Product', default: [] })
   productIds: Types.ObjectId[];
 }

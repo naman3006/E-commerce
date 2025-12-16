@@ -31,7 +31,10 @@ import SellerOrders from "./pages/SellerOrders";
 import CategoryManagement from "./pages/CategoryManagement";
 import CouponManagement from "./components/CouponManagement/CouponManagement";
 import RewardsCenter from "./pages/RewardsCenter";
+import WishlistDetail from "./pages/WishlistDetail";
+import SharedWishlist from "./pages/SharedWishlist";
 import { getProfile } from "./store/slices/authSlice";
+import { findWishlist } from "./store/slices/wishlistSlice";
 
 // import { io } from "socket.io-client"; // Removed, using Context
 import { useSocket } from "./contexts/SocketContext";
@@ -46,6 +49,10 @@ const App = () => {
     if (token && !user) {
       // Fetch profile if we have a token but no user (page reload)
       dispatch(getProfile());
+    }
+    // Also fetch wishlist to sync state
+    if (token) {
+      dispatch(findWishlist());
     }
   }, [dispatch, token, user]);
 
@@ -155,6 +162,14 @@ const App = () => {
             }
           />
           <Route
+            path="wishlists"
+            element={
+              <ProtectedRoute>
+                <Wishlist />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="wishlist"
             element={
               <ProtectedRoute>
@@ -162,6 +177,15 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="wishlists/:id"
+            element={
+              <ProtectedRoute>
+                <WishlistDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="wishlist/share/:token" element={<SharedWishlist />} />
           <Route
             path="notifications"
             element={

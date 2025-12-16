@@ -3,6 +3,8 @@ import {
   Get,
   Post,
   Delete,
+  Body,
+  Patch,
   Param,
   UseGuards,
 } from '@nestjs/common';
@@ -12,22 +14,60 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '../../common/interfaces/user.interface'; // Interface
 
 @Controller('wishlist')
-@UseGuards(JwtAuthGuard)
 export class WishlistController {
-  constructor(private wishlistService: WishlistService) {}
+  constructor(private wishlistService: WishlistService) { }
 
   @Get()
-  findOne(@CurrentUser() user: User) {
-    return this.wishlistService.findOne(user.id);
+  @UseGuards(JwtAuthGuard)
+  findAll(@CurrentUser() user: User) {
+    return this.wishlistService.findAll(user.id);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  create(@Body('name') name: string, @CurrentUser() user: User) {
+    if (!name) name = 'New Wishlist';
+    return this.wishlistService.create(user.id, name);
+  }
+
+  @Get('share/:token')
+  findByToken(@Param('token') token: string) {
+    return this.wishlistService.findByToken(token);
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  findOne(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.wishlistService.findOne(id, user.id);
+  }
+
+  @Patch(':id/privacy')
+  @UseGuards(JwtAuthGuard)
+  updatePrivacy(@Param('id') id: string, @Body('privacy') privacy: string, @CurrentUser() user: User) {
+    return this.wishlistService.updatePrivacy(id, user.id, privacy);
   }
 
   @Post('add/:productId')
-  add(@Param('productId') productId: string, @CurrentUser() user: User) {
-    return this.wishlistService.add(user.id, productId);
+  @UseGuards(JwtAuthGuard)
+  add(@Param('productId') productId: string, @CurrentUser() user: User, @Body('wishlistId') wishlistId?: string) {
+    return this.wishlistService.add(user.id, productId, wishlistId);
   }
 
   @Delete('remove/:productId')
-  remove(@Param('productId') productId: string, @CurrentUser() user: User) {
-    return this.wishlistService.remove(user.id, productId);
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('productId') productId: string, @CurrentUser() user: User, @Body('wishlistId') wishlistId?: string) {
+    return this.wishlistService.remove(user.id, productId, wishlistId);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  delete(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.wishlistService.delete(id, user.id);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  update(@Param('id') id: string, @Body() body: { name?: string }, @CurrentUser() user: User) {
+    return this.wishlistService.update(id, user.id, body);
   }
 }

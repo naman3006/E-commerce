@@ -7,6 +7,10 @@ import { selectUser } from '../store/slices/authSlice';
 import { findAllUsers } from '../store/slices/usersSlice';
 import { findAllProducts } from '../store/slices/productsSlice';
 import { toast } from 'react-toastify';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, PieChart, Pie, Cell, Legend
+} from 'recharts';
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
@@ -106,6 +110,86 @@ const AdminDashboard = () => {
         </div>
       </div>
 
+      {/* Analytics Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        {/* Revenue Chart */}
+        <div className="bg-white p-6 rounded-2xl shadow-soft border border-gray-100">
+          <h3 className="text-lg font-bold text-gray-900 mb-6">Revenue Trend</h3>
+          <div className="h-80 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={dashboard?.revenueByMonth?.map(d => ({
+                name: `${d._id.month}/${d._id.year}`,
+                revenue: d.revenue
+              })) || []}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} tickFormatter={(value) => `$${value}`} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                  formatter={(value) => [`$${value}`, 'Revenue']}
+                />
+                <Area type="monotone" dataKey="revenue" stroke="#4F46E5" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Order Status & Top Products */}
+        <div className="grid grid-cols-1 gap-8">
+
+          {/* Top Products Bar Chart */}
+          <div className="bg-white p-6 rounded-2xl shadow-soft border border-gray-100 flex-1">
+            <h3 className="text-lg font-bold text-gray-900 mb-6">Top Selling Products</h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dashboard?.topSellingProducts || []} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                  <XAxis type="number" hide />
+                  <YAxis dataKey="title" type="category" width={100} tick={{ fontSize: 10 }} />
+                  <Tooltip cursor={{ fill: 'transparent' }} />
+                  <Bar dataKey="soldCount" fill="#8B5CF6" radius={[0, 4, 4, 0]} barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Order Status Pie Chart */}
+          <div className="bg-white p-6 rounded-2xl shadow-soft border border-gray-100 flex-1">
+            <h3 className="text-lg font-bold text-gray-900 mb-6">Order Status</h3>
+            <div className="h-64 w-full flex justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={dashboard?.ordersByStatus?.map(s => ({ name: s._id, value: s.count })) || []}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {(dashboard?.ordersByStatus || []).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={['#10B981', '#F59E0B', '#EF4444', '#3B82F6'][index % 4]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
       {/* User Management Section */}
       <div className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -125,7 +209,7 @@ const AdminDashboard = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-        </div>
+        </div >
 
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -214,8 +298,8 @@ const AdminDashboard = () => {
             <button className="px-3 py-1 rounded-md bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50" disabled>Next</button>
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

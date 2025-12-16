@@ -7,6 +7,10 @@
       {
         "include": "modules/mail/templates/**/*",
         "outDir": "dist/modules/mail/templates"
+      },
+      {
+        "include": "i18n/**/*",
+        "watchAssets": true
       }
     ]
   }

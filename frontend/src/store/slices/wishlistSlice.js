@@ -16,10 +16,27 @@ export const findWishlist = createAsyncThunk(
 
 export const addToWishlist = createAsyncThunk(
   'wishlist/add',
-  async (productId, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
-      const response = await api.post(`/wishlist/add/${productId}`);
+      // Support both direct ID (legacy) and object { productId, wishlistId }
+      const productId = typeof payload === 'string' ? payload : payload.productId;
+      const wishlistId = typeof payload === 'object' ? payload.wishlistId : undefined;
+
+      const response = await api.post(`/wishlist/add/${productId}`, { wishlistId });
       return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+
+export const createWishlist = createAsyncThunk(
+  'wishlist/create',
+  async (name, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/wishlist', { name });
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -28,9 +45,13 @@ export const addToWishlist = createAsyncThunk(
 
 export const removeFromWishlist = createAsyncThunk(
   'wishlist/remove',
-  async (productId, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
-      const response = await api.delete(`/wishlist/remove/${productId}`);
+      const productId = typeof payload === 'string' ? payload : payload.productId;
+      const wishlistId = typeof payload === 'object' ? payload.wishlistId : undefined;
+
+      // Use 'data' config for DELETE requests with body
+      const response = await api.delete(`/wishlist/remove/${productId}`, { data: { wishlistId } });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -41,20 +62,59 @@ export const removeFromWishlist = createAsyncThunk(
 const wishlistSlice = createSlice({
   name: 'wishlist',
   initialState: {
-    wishlist: null,
+    wishlist: null, // Legacy
+    wishlists: [], // New support
+    items: [], // Flattened IDs for fast lookup
     loading: false,
     error: null,
   },
   extraReducers: (builder) => {
     builder
       .addCase(findWishlist.fulfilled, (state, action) => {
-        state.wishlist = action.payload;
+        // Handle array response
+        const data = Array.isArray(action.payload) ? action.payload : [action.payload];
+        state.wishlists = data;
+        // Flatten all product IDs for easy "isFavorite" check
+        const allIds = new Set();
+        data.forEach(list => {
+          list.productIds?.forEach(p => allIds.add(typeof p === 'string' ? p : p._id));
+        });
+        state.items = Array.from(allIds);
+        // Keep legacy compatibility just in case
+        state.wishlist = data[0] || null;
       })
       .addCase(addToWishlist.fulfilled, (state, action) => {
-        state.wishlist = action.payload;
+        // Update the specific wishlist in the array
+        const updatedList = action.payload;
+        const index = state.wishlists.findIndex(w => w._id === updatedList._id);
+        if (index !== -1) {
+          state.wishlists[index] = updatedList;
+        } else {
+          state.wishlists.push(updatedList);
+        }
+        // Update items list
+        updatedList.productIds?.forEach(p => {
+          const id = typeof p === 'string' ? p : p._id;
+          if (!state.items.includes(id)) state.items.push(id);
+        });
+        state.wishlist = updatedList;
+      })
+      .addCase(createWishlist.fulfilled, (state, action) => {
+        state.wishlists.push(action.payload);
       })
       .addCase(removeFromWishlist.fulfilled, (state, action) => {
-        state.wishlist = action.payload;
+        const updatedList = action.payload;
+        const index = state.wishlists.findIndex(w => w._id === updatedList._id);
+        if (index !== -1) {
+          state.wishlists[index] = updatedList;
+        }
+        // Re-calculate items (expensive but safe)
+        const allIds = new Set();
+        state.wishlists.forEach(list => {
+          list.productIds?.forEach(p => allIds.add(typeof p === 'string' ? p : p._id));
+        });
+        state.items = Array.from(allIds);
+        state.wishlist = updatedList;
       });
   },
 });

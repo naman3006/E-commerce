@@ -5,9 +5,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../store/slices/authSlice';
 import { toast } from 'react-toastify';
 
+import { useTranslation } from 'react-i18next';
+
 const Register = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { loading, error } = useSelector((state) => state.auth);
   const [registerData, setRegisterData] = useState({ name: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -28,7 +31,7 @@ const Register = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">{t('auth.register_title')}</h2>
         </div>
         {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{error.message || 'Registration failed'}</div>}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -39,7 +42,7 @@ const Register = () => {
               value={registerData.name}
               onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Full Name"
+              placeholder={t('auth.name_placeholder')}
             />
             <input
               type="email"
@@ -47,7 +50,7 @@ const Register = () => {
               value={registerData.email}
               onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Email address"
+              placeholder={t('auth.email_placeholder')}
             />
             <div className="relative">
               <input
@@ -56,7 +59,7 @@ const Register = () => {
                 value={registerData.password}
                 onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10"
-                placeholder="Password"
+                placeholder={t('auth.password_placeholder')}
               />
               <button
                 type="button"
@@ -83,13 +86,13 @@ const Register = () => {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? 'Creating account...' : t('auth.create_account_btn')}
             </button>
           </div>
 
           <div className="text-center">
             <Link to="/login" className="text-indigo-600 hover:text-indigo-500">
-              Already have an account? Sign in
+              {t('auth.has_account')}
             </Link>
           </div>
         </form>

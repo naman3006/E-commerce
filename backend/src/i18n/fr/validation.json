@@ -1,0 +1,4 @@
+{
+    "isNotEmpty": "Le champ {property} ne doit pas être vide",
+    "isEmail": "Le champ {property} doit être une adresse e-mail valide"
+}

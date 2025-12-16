@@ -1,0 +1,8 @@
+{
+    "events": {
+        "user_created": "Usuario creado exitosamente",
+        "user_not_found": "Usuario no encontrado",
+        "invalid_password": "Contraseña inválida",
+        "hello": "Hola"
+    }
+}

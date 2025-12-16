@@ -7,7 +7,7 @@ import ReviewCard from '../components/ReviewCard/ReviewCard';
 import ProductCard from '../components/ProductCard/ProductCard';
 import { findOneProduct, findProductRecommendations, selectRecommendations } from '../store/slices/productsSlice';
 import { createReview, findReviewsByProduct } from '../store/slices/reviewsSlice';
-import { addToWishlist } from '../store/slices/wishlistSlice';
+import { addToWishlist, removeFromWishlist, createWishlist } from '../store/slices/wishlistSlice';
 import { addToCart } from '../store/slices/cartSlice';
 import { toast } from 'react-toastify';
 
@@ -19,9 +19,13 @@ const ProductDetail = () => {
   const recommendations = useSelector(selectRecommendations);
   const { reviews, loading: reviewsLoading } = useSelector((state) => state.reviews);
   const { token } = useSelector((state) => state.auth);
+  const { items: wishlistItems, wishlists: allWishlists } = useSelector((state) => state.wishlist);
+  const inWishlist = wishlistItems?.some((itemId) => itemId === product?._id);
   const [quantity, setQuantity] = useState(1);
   const [reviewText, setReviewText] = useState('');
   const [rating, setRating] = useState(5);
+  const [showWishlistModal, setShowWishlistModal] = useState(false);
+  const [newWishlistName, setNewWishlistName] = useState('');
 
   useEffect(() => {
     dispatch(findOneProduct(id));
@@ -65,12 +69,34 @@ const ProductDetail = () => {
     dispatch(addToCart({ productId: id, quantity }));
   };
 
-  const handleAddToWishlist = () => {
+  const handleWishlistToggle = async (wishlistId, isCurrentlyIn) => {
+    if (!token) return;
+
+    // Toggle logic
+    if (isCurrentlyIn) {
+      await dispatch(removeFromWishlist({ productId: id, wishlistId }));
+      // toast.info('Removed from list');
+    } else {
+      await dispatch(addToWishlist({ productId: id, wishlistId }));
+      // toast.success('Added to list');
+    }
+  };
+
+  const handleCreateAndAdd = async () => {
+    if (!newWishlistName.trim()) return;
+    const res = await dispatch(createWishlist(newWishlistName)).unwrap();
+    // Auto add to the new list
+    await dispatch(addToWishlist({ productId: id, wishlistId: res._id }));
+    setNewWishlistName('');
+    toast.success('List created and item added!');
+  };
+
+  const openWishlistModal = () => {
     if (!token) {
       navigate('/login');
       return;
     }
-    dispatch(addToWishlist(id));
+    setShowWishlistModal(true);
   };
 
   const handleSubmitReview = (e) => {
@@ -128,10 +154,10 @@ const ProductDetail = () => {
               Add to Cart
             </button>
             <button
-              onClick={handleAddToWishlist}
-              className="bg-gray-200 text-gray-700 px-6 py-3 rounded-md hover:bg-gray-300 transition-colors"
+              onClick={openWishlistModal}
+              className={`px-6 py-3 rounded-md transition-colors ${inWishlist ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
             >
-              Add to Wishlist
+              {inWishlist ? 'Saved to Wishlist' : 'Add to Wishlist'}
             </button>
           </div>
         </div>
@@ -236,6 +262,64 @@ const ProductDetail = () => {
           ))}
         </div>
       </div>
+
+      {/* Wishlist Selection Modal */}
+      {showWishlistModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl transform transition-all scale-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Manage Wishlists</h3>
+              <button onClick={() => setShowWishlistModal(false)} className="text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-60 overflow-y-auto mb-6 px-1">
+              {allWishlists.length === 0 && <p className="text-gray-500 text-center py-4">No wishlists yet.</p>}
+
+              {allWishlists.map(list => {
+                const isAlreadyIn = list.productIds?.some(p => (typeof p === 'string' ? p : p._id) === product._id);
+                return (
+                  <div
+                    key={list._id}
+                    className="flex items-center p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => handleWishlistToggle(list._id, isAlreadyIn)}
+                  >
+                    <div className={`w-5 h-5 rounded border flex items-center justify-center mr-3 transition-colors ${isAlreadyIn ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 bg-white'}`}>
+                      {isAlreadyIn && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`font-medium ${isAlreadyIn ? 'text-indigo-900' : 'text-gray-700'}`}>{list.name}</p>
+                      <p className="text-xs text-gray-400">{list.productIds?.length || 0} items</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border-t pt-4">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Create New List</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Name (e.g. Birthday)"
+                  className="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                  value={newWishlistName}
+                  onChange={(e) => setNewWishlistName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleCreateAndAdd()}
+                />
+                <button
+                  onClick={handleCreateAndAdd}
+                  disabled={!newWishlistName.trim()}
+                  className="px-4 py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Create
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

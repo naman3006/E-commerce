@@ -25,10 +25,23 @@ import { ChatbotModule } from './modules/chatbot/chatbot.module';
 
 
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
+import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
+import * as path from 'path';
 
 @Module({
   imports: [
     LoyaltyModule,
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '..', 'i18n'),
+        watch: true,
+      },
+      resolvers: [
+        { use: QueryResolver, options: ['lang'] },
+        AcceptLanguageResolver,
+      ],
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',

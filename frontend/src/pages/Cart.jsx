@@ -10,8 +10,11 @@ import {
   removeCoupon
 } from "../store/slices/cartSlice";
 
+import { useTranslation } from 'react-i18next';
+
 const Cart = () => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const { cart, loading } = useSelector((state) => state.cart);
   const { token } = useSelector((state) => state.auth);
   // Moved hooks to top level
@@ -31,13 +34,13 @@ const Cart = () => {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          Your cart is empty
+          {t('cart.empty')}
         </h2>
         <Link
           to="/products"
           className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors"
         >
-          Continue Shopping
+          {t('cart.continue_shopping')}
         </Link>
       </div>
     );
@@ -75,7 +78,7 @@ const Cart = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
+      <h1 className="text-3xl font-bold text-gray-900">{t('cart.title')}</h1>
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="divide-y divide-gray-200">
           {cart.items.map((item) => (
@@ -93,16 +96,16 @@ const Cart = () => {
           <div className="flex justify-between items-center text-lg font-semibold">
             <div className="flex flex-col items-end w-full">
               <div className="flex justify-between w-full mb-2">
-                <span>Subtotal:</span>
+                <span>{t('cart.subtotal')}:</span>
                 <span>₹{total.toFixed(2)}</span>
               </div>
 
               {/* Shipping Charge */}
               <div className="flex justify-between w-full mb-2 text-gray-600">
-                <span>Shipping:</span>
+                <span>{t('cart.shipping')}:</span>
                 <span>
                   {total > 1000 ? (
-                    <span className="text-green-600">Free</span>
+                    <span className="text-green-600">{t('cart.free')}</span>
                   ) : (
                     <span>₹40.00</span>
                   )}
@@ -116,7 +119,7 @@ const Cart = () => {
                     type="text"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
-                    placeholder="Coupon Code"
+                    placeholder={t('cart.coupon_placeholder')}
                     disabled={!!coupon}
                     className="flex-1 p-2 border rounded"
                   />
@@ -125,7 +128,7 @@ const Cart = () => {
                       onClick={handleRemoveCoupon}
                       className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
                     >
-                      Remove
+                      {t('cart.remove')}
                     </button>
                   ) : (
                     <button
@@ -133,7 +136,7 @@ const Cart = () => {
                       disabled={couponLoading || !couponCode}
                       className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
                     >
-                      {couponLoading ? 'Checking...' : 'Apply'}
+                      {couponLoading ? 'Checking...' : t('cart.apply')}
                     </button>
                   )}
                 </div>
@@ -147,13 +150,13 @@ const Cart = () => {
 
               {coupon && (
                 <div className="flex justify-between w-full mb-2 text-green-600">
-                  <span>Discount:</span>
+                  <span>{t('cart.discount')}:</span>
                   <span>-₹{discountAmount.toFixed(2)}</span>
                 </div>
               )}
 
               <div className="flex justify-between w-full text-xl border-t pt-2">
-                <span>Total:</span>
+                <span>{t('cart.total')}:</span>
                 <span>₹{(total - discountAmount + (total > 1000 ? 0 : 40)).toFixed(2)}</span>
               </div>
 
@@ -162,7 +165,7 @@ const Cart = () => {
                   to="/checkout"
                   className="bg-blue-500 text-white px-8 py-3 rounded-md hover:bg-blue-600 transition-colors"
                 >
-                  Proceed to Checkout
+                  {t('cart.checkout_btn')}
                 </Link>
               </div>
             </div>
@@ -171,7 +174,7 @@ const Cart = () => {
             onClick={() => dispatch(clearCart())}
             className="mt-4 text-sm text-red-500 hover:text-red-700 transition-colors"
           >
-            Clear Cart
+            {t('cart.clear_btn')}
           </button>
         </div>
       </div>
