@@ -64,6 +64,36 @@ class OrderItem {
   price: number;
 }
 
+class ShippingAddressDto {
+  @IsString()
+  @IsNotEmpty()
+  fullName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  addressLine: string;
+
+  @IsString()
+  @IsNotEmpty()
+  city: string;
+
+  @IsString()
+  @IsNotEmpty()
+  state: string;
+
+  @IsString()
+  @IsNotEmpty()
+  postalCode: string;
+
+  @IsString()
+  @IsNotEmpty()
+  country: string;
+
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
+}
+
 export class CreateOrderDto {
   @IsArray()
   @ValidateNested({ each: true })
@@ -81,9 +111,10 @@ export class CreateOrderDto {
   @IsEnum(OrderStatus)
   orderStatus: OrderStatus = OrderStatus.pending;
 
-  @IsString()
+  @ValidateNested()
+  @Type(() => ShippingAddressDto)
   @IsNotEmpty()
-  shippingAddress: string;
+  shippingAddress: ShippingAddressDto;
 
   @IsString()
   @IsOptional()

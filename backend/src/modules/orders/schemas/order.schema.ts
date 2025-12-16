@@ -62,6 +62,30 @@ class OrderItem {
 
 const OrderItemSchema = SchemaFactory.createForClass(OrderItem);
 
+@Schema({ _id: false })
+export class ShippingAddress {
+  @Prop({ required: true })
+  fullName: string;
+
+  @Prop({ required: true })
+  addressLine: string;
+
+  @Prop({ required: true })
+  city: string;
+
+  @Prop({ required: true })
+  state: string;
+
+  @Prop({ required: true })
+  postalCode: string;
+
+  @Prop({ required: true })
+  country: string;
+
+  @Prop({ required: true })
+  phone: string;
+}
+
 @Schema({ timestamps: true })
 export class Order {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
@@ -97,11 +121,13 @@ export class Order {
   @Prop({ enum: OrderStatus, default: OrderStatus.pending })
   orderStatus: OrderStatus;
 
-  @Prop({ required: true })
-  shippingAddress: string;
 
-  @Prop()
-  billingAddress: string;
+
+  @Prop({ type: ShippingAddress, required: true })
+  shippingAddress: ShippingAddress;
+
+  @Prop({ type: Object })
+  billingAddress: any;
 
   @Prop()
   trackingNumber: string;
