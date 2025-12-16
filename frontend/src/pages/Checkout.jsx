@@ -21,7 +21,7 @@ const Checkout = () => {
   const { addresses, loading: addressesLoading } = useSelector(
     (state) => state.address
   );
-  const { token } = useSelector((state) => state.auth);
+  const { token, user } = useSelector((state) => state.auth);
   const [selectedAddress, setSelectedAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("card");
 
@@ -69,7 +69,15 @@ const Checkout = () => {
       totalAmount: total,
       paymentStatus: "pending",
       orderStatus: "pending",
-      shippingAddress: `${addressObj.addressLine || addressObj.street || ''}, ${addressObj.city || ''}, ${addressObj.state || ''} ${addressObj.postalCode || addressObj.zipCode || ''}`.trim(),
+      shippingAddress: {
+        fullName: addressObj.fullName || user?.name || "Unknown",
+        addressLine: addressObj.addressLine || addressObj.street || '',
+        city: addressObj.city || '',
+        state: addressObj.state || '',
+        postalCode: addressObj.postalCode || addressObj.zipCode || '',
+        country: addressObj.country || 'India',
+        phone: addressObj.phone || user?.phone || "9999999999"
+      },
       appliedCoupon: coupon?._id,
     };
 
