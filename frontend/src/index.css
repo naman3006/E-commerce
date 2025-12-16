@@ -144,7 +144,7 @@
 
     /* Branded Text Selection */
     ::selection {
-        @apply bg-primary-500/30 text-primary-900 dark:text-primary-100;
+        @apply bg-primary-400 text-primary-900 dark:text-primary-100;
     }
 
 }

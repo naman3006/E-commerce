@@ -1,11 +1,11 @@
-import React from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Menu, MenuItem, IconButton, Tooltip } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';
 
 const LanguageSwitcher = () => {
     const { i18n } = useTranslation();
-    const [anchorEl, setAnchorEl] = React.useState(null);
+    const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
 
     const handleClick = (event) => {

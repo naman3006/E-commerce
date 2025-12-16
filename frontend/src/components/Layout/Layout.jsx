@@ -1,5 +1,5 @@
 // src/components/Layout/Layout.js
-import React from "react";
+import React, { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { findCart } from "../../store/slices/cartSlice";
@@ -11,7 +11,7 @@ import ChatWidget from "../Chat/ChatWidget";
 const Layout = () => {
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
-  React.useEffect(() => {
+  useEffect(() => {
     if (token) {
       dispatch(findCart());
       dispatch(findWishlist());

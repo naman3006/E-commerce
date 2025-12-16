@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
@@ -19,14 +19,14 @@ const Navbar = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const { isListening, transcript, startListening, error: voiceError } = useVoiceSearch();
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (transcript) {
             setSearchQuery(transcript);
             navigate(`/products?search=${encodeURIComponent(transcript)}`);
         }
     }, [transcript, navigate]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (voiceError) {
             alert(voiceError); // Simple alert for now, can be a toast
         }
