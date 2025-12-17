@@ -152,6 +152,14 @@ export class CreateProductDto {
   @IsOptional()
   seo?: SEODto;
 
+  @IsString()
+  @IsOptional()
+  arModelUrl?: string;
+
+  @IsEnum(['floor', 'wall'])
+  @IsOptional()
+  arPlacement?: string;
+
   @IsEnum(['in-stock', 'out-of-stock', 'pre-order'])
   @IsOptional()
   stockStatus?: string;

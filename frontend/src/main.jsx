@@ -8,6 +8,7 @@ import './index.css';
 import { store } from './store/store';
 
 import { ThemeProvider } from './contexts/ThemeContext';
+import { VoiceProvider } from './contexts/VoiceContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -15,7 +16,9 @@ root.render(
     <Provider store={store}>
       <BrowserRouter>
         <ThemeProvider>
-          <App />
+          <VoiceProvider>
+            <App />
+          </VoiceProvider>
         </ThemeProvider>
       </BrowserRouter>
     </Provider>

@@ -99,6 +99,16 @@ export class Product {
   @Prop({ type: SEO })
   seo: SEO;
 
+  @Prop()
+  arModelUrl: string; // URL to the 3D model (.glb/.gltf)
+
+  @Prop({
+    type: String,
+    enum: ['floor', 'wall'],
+    default: 'floor'
+  })
+  arPlacement: string;
+
   @Prop({
     type: String,
     enum: ['in-stock', 'out-of-stock', 'pre-order'],

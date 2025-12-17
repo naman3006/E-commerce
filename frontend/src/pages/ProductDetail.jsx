@@ -11,6 +11,7 @@ import { createReview, findReviewsByProduct } from '../store/slices/reviewsSlice
 import { addToWishlist, removeFromWishlist, createWishlist } from '../store/slices/wishlistSlice';
 import { addToCart } from '../store/slices/cartSlice';
 import { toast } from 'react-toastify';
+import ARViewer from '../components/product/ARViewer';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -51,7 +52,7 @@ const ProductDetail = () => {
   };
 
   // Debug: log product image fields to browser console for inspection
-  React.useEffect(() => {
+  useEffect(() => {
     if (product) {
       // eslint-disable-next-line no-console
       console.debug('Product image fields', {
@@ -133,6 +134,23 @@ const ProductDetail = () => {
             onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.jpg'; }}
             className="w-full h-96 object-cover rounded-lg"
           />
+          {product.arModelUrl && (
+            <div className="mt-6 border border-indigo-50 bg-indigo-50/30 rounded-2xl p-4">
+              <div className="flex items-center space-x-2 mb-3">
+                <span className="flex h-3 w-3 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                </span>
+                <h3 className="text-lg font-bold text-gray-900">Augmented Reality Experience</h3>
+              </div>
+              <ARViewer
+                src={product.arModelUrl}
+                poster={getImageSrc()}
+                placement={product.arPlacement}
+                alt={product.title}
+              />
+            </div>
+          )}
         </div>
         <div className="space-y-6">
           <h1 className="text-3xl font-bold text-gray-900">{product.title}</h1>

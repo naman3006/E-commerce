@@ -40,6 +40,7 @@ import { findWishlist } from "./store/slices/wishlistSlice";
 import { useSocket } from "./contexts/SocketContext";
 import { addNotification } from "./store/slices/notificationsSlice";
 import { toast, ToastContainer } from "react-toastify";
+import VoiceOverlay from "./components/VoiceAssistant/VoiceOverlay";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -253,8 +254,9 @@ const App = () => {
         </Route>
 
       </Routes>
+      <VoiceOverlay />
       <ToastContainer />
-    </div>
+    </div >
   );
 };
 
