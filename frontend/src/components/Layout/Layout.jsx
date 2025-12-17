@@ -1,4 +1,3 @@
-// src/components/Layout/Layout.js
 import React, { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -7,10 +6,29 @@ import { findWishlist } from "../../store/slices/wishlistSlice";
 import { findAllNotifications } from "../../store/slices/notificationsSlice";
 import Navbar from "./Navbar";
 import ChatWidget from "../Chat/ChatWidget";
+import { VoiceProvider, useVoice } from "../../contexts/VoiceContext";
+import VoiceAssistantOverlay from "../VoiceAssistant/VoiceAssistantOverlay";
+import VoiceFloatingButton from "../VoiceAssistant/VoiceFloatingButton";
 
-const Layout = () => {
+// Inner component to consume voice context for the overlay
+const VoiceOverlayWrapper = () => {
+  const { isOverlayOpen, isListening, transcript, interimTranscript, feedback, closeOverlay } = useVoice();
+  return (
+    <VoiceAssistantOverlay
+      isOpen={isOverlayOpen}
+      isListening={isListening}
+      transcript={transcript}
+      interimTranscript={interimTranscript}
+      feedback={feedback}
+      onClose={closeOverlay}
+    />
+  );
+};
+
+const LayoutContainer = () => {
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
+
   useEffect(() => {
     if (token) {
       dispatch(findCart());
@@ -34,8 +52,18 @@ const Layout = () => {
           <p>&copy; 2025 E-Shop. Crafted with ❤️ for excellence.</p>
         </div>
       </footer>
+      <VoiceOverlayWrapper />
+      <VoiceFloatingButton />
       <ChatWidget /> {/* Render ChatWidget at the bottom */}
     </div>
+  );
+}
+
+const Layout = () => {
+  return (
+    <VoiceProvider>
+      <LayoutContainer />
+    </VoiceProvider>
   );
 };
 

@@ -1,9 +1,10 @@
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
 import logo from '../../assets/LOGO2.jpeg';
-import useVoiceSearch from '../../hooks/useVoiceSearch';
+import useVoiceNavigation from '../../hooks/useVoiceNavigation';
+import VoiceAssistantOverlay from '../VoiceAssistant/VoiceAssistantOverlay';
 import LanguageSwitcher from '../LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 
@@ -17,18 +18,26 @@ const Navbar = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const { isListening, transcript, startListening, error: voiceError } = useVoiceSearch();
 
+    // Use the new navigation text hook (now uses Context)
+    const {
+        isListening,
+        transcript,
+        startListening,
+        error: voiceError
+    } = useVoiceNavigation();
+
+    // Sync input with voice transcript for visual confirmation
     useEffect(() => {
         if (transcript) {
             setSearchQuery(transcript);
-            navigate(`/products?search=${encodeURIComponent(transcript)}`);
         }
-    }, [transcript, navigate]);
+    }, [transcript]);
 
     useEffect(() => {
         if (voiceError) {
-            alert(voiceError); // Simple alert for now, can be a toast
+            // Error is now handled in Overlay or just logged
+            console.error(voiceError);
         }
     }, [voiceError]);
 
@@ -62,6 +71,7 @@ const Navbar = () => {
 
     return (
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-soft transition-all duration-300">
+            {/* Overlay is now global in Layout, removed from here */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-20">
                     {/* Logo */}
@@ -80,7 +90,7 @@ const Navbar = () => {
                         </div>
                         <input
                             type="text"
-                            placeholder={isListening ? "Listening..." : "I'm shopping for..."}
+                            placeholder={isListening ? "Listening..." : (t('navbar.search_placeholder') || "I'm shopping for...")}
                             className={`block w-full pl-10 pr-10 py-2 border rounded-full leading-5 bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-1 sm:text-sm transition-all shadow-sm hover:shadow-md ${isListening ? 'border-primary-500 ring-primary-500' : 'border-gray-200 focus:border-primary-500 focus:ring-primary-500'}`}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -91,7 +101,7 @@ const Navbar = () => {
                             }}
                         />
                         <button
-                            className={`absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer ${isListening ? 'text-red-500 animate-pulse' : 'text-gray-400 hover:text-primary-500'}`}
+                            className={`absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer ${isListening ? 'text-primary-500' : 'text-gray-400 hover:text-primary-500'}`}
                             onClick={startListening}
                             title="Voice Search"
                         >
@@ -334,5 +344,6 @@ const Navbar = () => {
         </header>
     );
 };
+
 
 export default Navbar;
