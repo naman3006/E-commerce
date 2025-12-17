@@ -11,7 +11,7 @@ import {
 } from "../store/slices/cartSlice";
 
 import { useTranslation } from 'react-i18next';
-
+  
 const Cart = () => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
