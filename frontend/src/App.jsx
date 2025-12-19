@@ -43,9 +43,27 @@ import { toast, ToastContainer } from "react-toastify";
 import VoiceOverlay from "./components/VoiceAssistant/VoiceOverlay";
 import ActivityToast from "./components/common/ActivityToast";
 
+import { useCoBrowsing } from "./hooks/useCoBrowsing";
+import ShopTogether from "./components/co-browsing/ShopTogether";
+import CursorOverlay from "./components/co-browsing/CursorOverlay";
+
 const App = () => {
   const dispatch = useDispatch();
   const { token, user } = useSelector((state) => state.auth);
+
+  // Co-Browsing Hook
+  const {
+    socket: coSocket,
+    isConnected: isCoConnected,
+    session,
+    participants,
+    reactions,
+    createSession,
+    joinSession,
+    emitCursorMove,
+    sendReaction,
+    leaveSession
+  } = useCoBrowsing();
 
   useEffect(() => {
     if (token && !user) {
@@ -57,6 +75,24 @@ const App = () => {
       dispatch(findWishlist());
     }
   }, [dispatch, token, user]);
+
+  // Global Mouse Tracking for Co-Browsing
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      // Calculate relative position (0-1)
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      emitCursorMove(x, y);
+    };
+
+    if (session) {
+      window.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [session, emitCursorMove]);
 
   /* 
    * Socket logic is now handled in SocketContext.
@@ -258,6 +294,15 @@ const App = () => {
       <VoiceOverlay />
       <ToastContainer />
       <ActivityToast />
+      <ShopTogether
+        session={session}
+        isConnected={isCoConnected}
+        onCreateSession={createSession}
+        onJoinSession={joinSession}
+        onLeaveSession={leaveSession}
+        onSendReaction={sendReaction}
+      />
+      {session && <CursorOverlay participants={participants} reactions={reactions} myId={coSocket?.id} />}
     </div >
   );
 };
