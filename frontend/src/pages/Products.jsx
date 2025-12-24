@@ -34,15 +34,16 @@ const Products = () => {
   const categories = useSelector(selectAllCategories);
 
   // Local state
+  // Initialize filters from URL
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [filters, setFilters] = useState({
-    category: "",
+    category: searchParams.get("category") || "",
     search: searchParams.get("search") || "",
-    minPrice: "",
-    maxPrice: "",
-    sortBy: "createdAt",
-    sortOrder: "desc",
-    page: 1,
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
+    sortBy: searchParams.get("sortBy") || "createdAt",
+    sortOrder: searchParams.get("sortOrder") || "desc",
+    page: parseInt(searchParams.get("page") || "1", 10),
     limit: 20,
   });
 
@@ -78,7 +79,21 @@ const Products = () => {
     }
   }, [voiceError]);
 
-  // Sync searchTerm with URL and debounce update filters
+  // Sync state with URL changes (e.g. from Voice Navigation)
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      category: searchParams.get("category") || prev.category,
+      search: searchParams.get("search") || prev.search,
+      minPrice: searchParams.get("minPrice") || prev.minPrice,
+      maxPrice: searchParams.get("maxPrice") || prev.maxPrice,
+      sortBy: searchParams.get("sortBy") || prev.sortBy,
+      page: parseInt(searchParams.get("page") || "1", 10)
+    }));
+    setSearchTerm(searchParams.get("search") || "");
+  }, [searchParams]);
+
+  // Debounce search term update (only for manual typing)
   useEffect(() => {
     const handler = setTimeout(() => {
       setFilters(prev => {
@@ -86,17 +101,17 @@ const Products = () => {
         return { ...prev, search: searchTerm, page: 1 };
       });
 
-      // Update URL
-      if (searchTerm) {
-        searchParams.set("search", searchTerm);
-      } else {
-        searchParams.delete("search");
+      // We don't need to setSearchParams here if we want URL to be the source of truth, 
+      // but for manual typing we do.
+      if (searchTerm !== searchParams.get("search")) {
+        if (searchTerm) searchParams.set("search", searchTerm);
+        else searchParams.delete("search");
+        setSearchParams(searchParams, { replace: true });
       }
-      setSearchParams(searchParams, { replace: true });
     }, 500);
 
     return () => clearTimeout(handler);
-  }, [searchTerm, searchParams]);
+  }, [searchTerm]);
 
   // Memoize filters to avoid unnecessary re-renders
   const memoizedFilters = useMemo(

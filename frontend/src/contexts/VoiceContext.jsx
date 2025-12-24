@@ -2,6 +2,7 @@ import React, { createContext, useState, useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { processVoiceCommand } from '../utils/voiceCommands';
 import { useTheme } from './ThemeContext';
+import api from '../store/api/api';
 
 const VoiceContext = createContext(null);
 
@@ -73,24 +74,68 @@ export const VoiceProvider = ({ children }) => {
                 setTranscript(final);
                 setInterimTranscript('');
 
-                // Process the final command
-                const result = processVoiceCommand(final, navigate, { toggleDarkMode });
+                // 1. Try Local Simple Commands first (Optimization)
+                const localResult = processVoiceCommand(final, navigate, { toggleDarkMode });
 
-                if (result.matched) {
-                    setFeedback(result.feedback);
-                    speak(result.feedback);
-
-                    // Close overlay after a short delay to show success state
+                // If it's a simple navigation match (not a fallback search), use it
+                if (localResult.matched && !localResult.isSearchFallback) {
+                    setFeedback(localResult.feedback);
+                    speak(localResult.feedback);
                     setTimeout(() => {
                         setIsOverlayOpen(false);
                         setIsListening(false);
                         setFeedback(null);
                     }, 2000);
-                } else {
-                    const fallbackMsg = `Did you say "${final}"? Try "Go to Cart" or "Search for..."`;
-                    setFeedback(fallbackMsg);
-                    speak("I didn't catch that correctly. Please try again.");
+                    return;
                 }
+
+                // 2. If no local match (or it was a generic search), ask the AI Brain
+                setFeedback("Analyzing...");
+
+                api.post('/chatbot/message', { message: final, history: [] })
+                    .then(res => {
+                        const data = res.data; // { text, action, params }
+
+                        // Speak the AI's response text
+                        if (data.text) {
+                            speak(data.text);
+                            setFeedback(data.text);
+                        }
+
+                        // Execute AI Action
+                        if (data.action === 'SEARCH' && data.params) {
+                            const { query, category, minPrice, maxPrice, sort, color } = data.params;
+                            const searchParams = new URLSearchParams();
+
+                            if (query) searchParams.set('search', query);
+                            if (category) searchParams.set('category', category); // Might need ID mapping, but product page might handle text
+                            if (minPrice) searchParams.set('minPrice', minPrice);
+                            if (maxPrice) searchParams.set('maxPrice', maxPrice);
+                            if (sort) searchParams.set('sortBy', sort === 'newest' ? 'newest' : 'price'); // Simplified mapping
+                            if (color) searchParams.set('search', `${query || ''} ${color}`.trim()); // Append color to search if no specific filter
+
+                            navigate(`/products?${searchParams.toString()}`);
+                        } else if (data.action === 'NAVIGATE') {
+                            // AI might return generic navigate
+                            // For now, rely on local for nav, or implement if needed
+                        }
+
+                        setTimeout(() => {
+                            setIsOverlayOpen(false);
+                            setIsListening(false);
+                            setFeedback(null);
+                        }, 3000);
+                    })
+                    .catch(err => {
+                        console.error("AI Voice Error", err);
+                        speak("I'm having trouble connecting. Returning to simple search.");
+                        // Fallback to local search
+                        if (localResult.matched) {
+                            // It was a search fallback
+                            navigate(`/products?search=${encodeURIComponent(final)}`);
+                        }
+                    });
+
             } else {
                 setInterimTranscript(interim);
             }

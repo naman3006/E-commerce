@@ -5,6 +5,26 @@ const OptimizedImage = ({ src, alt, className, width, height, ...props }) => {
     const [isLoaded, setIsLoaded] = useState(false);
     const [hasError, setHasError] = useState(false);
 
+    // Process the image source URL to ensure it points to the correct backend
+    const finalSrc = React.useMemo(() => {
+        if (!src) return '';
+
+        // If it's already an absolute URL or a data URI, return as is
+        if (src.startsWith('http') || src.startsWith('data:')) {
+            return src;
+        }
+
+        // If it's a backend upload (contains 'uploads/'), prepend the API URL
+        if (src.includes('uploads/')) {
+            const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
+            const cleanPath = src.startsWith('/') ? src : `/${src}`;
+            return `${baseUrl}${cleanPath}`;
+        }
+
+        // Otherwise (e.g. static assets like /placeholder.jpg), return as is
+        return src;
+    }, [src]);
+
     return (
         <div className={`relative overflow-hidden ${className}`} style={{ width, height }}>
             {/* Loading Placeholder */}
@@ -25,7 +45,7 @@ const OptimizedImage = ({ src, alt, className, width, height, ...props }) => {
 
             {/* Actual Image */}
             <img
-                src={src}
+                src={finalSrc}
                 alt={alt}
                 loading="lazy"
                 decoding="async"

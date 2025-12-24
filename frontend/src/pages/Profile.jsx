@@ -4,6 +4,7 @@ import { updateProfile, uploadAvatar, deleteAccount, getProfile } from '../store
 import { toast } from 'react-toastify';
 import api from '../store/api/api';
 import UserActivityLog from '../components/profile/UserActivityLog';
+import OptimizedImage from '../components/common/OptimizedImage';
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -121,7 +122,7 @@ const Profile = () => {
             <div className="flex items-end gap-6">
               <div className="relative group">
                 <div className="w-36 h-36 rounded-full bg-white p-1.5 shadow-xl ring-4 ring-white/50 relative z-10 transition-transform duration-300 hover:scale-105">
-                  <img
+                  <OptimizedImage
                     src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
                     alt={user.name}
                     className="w-full h-full rounded-full object-cover bg-gray-50"

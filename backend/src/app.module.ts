@@ -35,6 +35,7 @@ import * as path from 'path';
 console.log('Current Dir:', __dirname);
 
 import * as fs from 'fs';
+import { AppController } from './app.controller';
 
 let i18nPath = path.join(process.cwd(), 'src', 'i18n');
 if (!fs.existsSync(i18nPath)) {
@@ -90,7 +91,7 @@ console.log('Resolving i18n Path:', i18nPath);
     GamificationModule,
     UserActivityModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule { }

@@ -62,7 +62,11 @@ export class ChatbotService {
       const cached = this.cache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
         this.logger.debug('Returning cached response');
-        return { text: cached.response };
+        try {
+          return JSON.parse(cached.response);
+        } catch {
+          return { text: cached.response };
+        }
       }
 
       // 2. Build Context
@@ -86,10 +90,25 @@ export class ChatbotService {
             const result = await chat.sendMessage(prompt);
             const response = result.response.text();
 
-            // Cache the successful response
-            this.cache.set(cacheKey, { response, timestamp: Date.now() });
+            // Try extracting JSON if present (often wrapped in ```json ... ```)
+            let finalResponse = { text: response };
+            try {
+              const cleanText = response.replace(/```json/g, '').replace(/```/g, '').trim();
+              if (cleanText.startsWith('{')) {
+                const parsed = JSON.parse(cleanText);
+                finalResponse = parsed; // { action, params, text }
+              }
+            } catch (e) {
+              // ignore, treat as text
+            }
 
-            return { text: response };
+            // Cache the successful response
+            this.cache.set(cacheKey, { response, timestamp: Date.now() }); // Cache original string? Or parsed?
+            // Let's cache the original string to keep it simple, but we return the object.
+            // Actually, we should cache the object or stringify it.
+            this.cache.set(cacheKey, { response: JSON.stringify(finalResponse), timestamp: Date.now() });
+
+            return finalResponse;
           } catch (err) {
             const isQuotaError =
               err.message.includes('429') ||
@@ -170,6 +189,22 @@ export class ChatbotService {
         - If you don't know, suggest where to look.
 
         User Question: ${message}
+
+        CRITICAL: If the user indicates a shopping intent (searching, filtering, sorting, or navigating), you MUST return a strict JSON object (no markdown, no extra text) with this structure:
+        {
+          "action": "SEARCH", // or "NAVIGATE"
+          "params": {
+            "query": "string", // search term
+            "color": "string",
+            "category": "string",
+            "maxPrice": number,
+            "minPrice": number,
+            "sort": "price_asc" | "price_desc" | "newest"
+          },
+          "text": "Brief confirmation text to speak to the user"
+        }
+
+        If it is a general question, just return the plain text response.
         `;
   }
 

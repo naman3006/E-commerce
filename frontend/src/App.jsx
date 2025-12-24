@@ -4,7 +4,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-
+import { AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 // Layout Components
 import Layout from "./components/Layout/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -54,6 +55,7 @@ import CursorOverlay from "./components/co-browsing/CursorOverlay";
 
 const App = () => {
   const dispatch = useDispatch();
+  const location = useLocation();
   const { token, user } = useSelector((state) => state.auth);
 
   // Co-Browsing Hook
@@ -132,6 +134,10 @@ const App = () => {
     }
   }, [socket, dispatch]);
 
+
+
+  // ... imports
+
   return (
     <div>
       <Suspense fallback={
@@ -139,174 +145,175 @@ const App = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
         </div>
       }>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="products" element={<Products />} />
-            <Route
-              path="products/manage"
-              element={
-                <ProtectedRoute>
-                  {(user?.role === "admin" || user?.role === "seller") ? (
-                    <ProductManagement />
-                  ) : (
-                    <div className="text-center py-12">
-                      <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
-                      <p className="text-gray-600 mt-2">You don't have permission to access this page.</p>
-                    </div>
-                  )}
-                </ProtectedRoute>
-              }
-            />
-            <Route path="products/:id" element={<ProductDetail />} />
-            <Route
-              path="cart"
-              element={
-                <ProtectedRoute>
-                  <Cart />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="checkout"
-              element={
-                <ProtectedRoute>
-                  <Checkout />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="orders"
-              element={
-                <ProtectedRoute>
-                  <Orders />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="orders/:id"
-              element={
-                <ProtectedRoute>
-                  <OrderDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="addresses"
-              element={
-                <ProtectedRoute>
-                  <Addresses />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="rewards"
-              element={
-                <ProtectedRoute>
-                  <RewardsCenter />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="wishlists"
-              element={
-                <ProtectedRoute>
-                  <Wishlist />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="wishlist"
-              element={
-                <ProtectedRoute>
-                  <Wishlist />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="wishlists/:id"
-              element={
-                <ProtectedRoute>
-                  <WishlistDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="wishlist/share/:token" element={<SharedWishlist />} />
-            <Route
-              path="notifications"
-              element={
-                <ProtectedRoute>
-                  <Notifications />
-                </ProtectedRoute>
-              }
-            />
-            {user?.role === "admin" && (
-              <>
-                <Route
-                  path="admin/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <AdminDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="admin/orders"
-                  element={
-                    <ProtectedRoute>
-                      <OrderManagement />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="categories/manage"
-                  element={
-                    <ProtectedRoute>
-                      <CategoryManagement />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="admin/coupons"
-                  element={
-                    <ProtectedRoute>
-                      <CouponManagement />
-                    </ProtectedRoute>
-                  }
-                />
-              </>
-            )}
-            {user?.role === "seller" && (
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path="products" element={<Products />} />
               <Route
-                path="seller/orders"
+                path="products/manage"
                 element={
                   <ProtectedRoute>
-                    <SellerOrders />
+                    {(user?.role === "admin" || user?.role === "seller") ? (
+                      <ProductManagement />
+                    ) : (
+                      <div className="text-center py-12">
+                        <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
+                        <p className="text-gray-600 mt-2">You don't have permission to access this page.</p>
+                      </div>
+                    )}
                   </ProtectedRoute>
                 }
               />
-            )}
-            <Route path="login" element={token ? <Navigate to="/" /> : <Login />} />
-            <Route
-              path="register"
-              element={token ? <Navigate to="/" /> : <Register />}
-            />
-            <Route
-              path="forgot-password"
-              element={token ? <Navigate to="/" /> : <ForgotPassword />}
-            />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Route>
-
-        </Routes>
+              <Route path="products/:id" element={<ProductDetail />} />
+              <Route
+                path="cart"
+                element={
+                  <ProtectedRoute>
+                    <Cart />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="checkout"
+                element={
+                  <ProtectedRoute>
+                    <Checkout />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="orders"
+                element={
+                  <ProtectedRoute>
+                    <Orders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="orders/:id"
+                element={
+                  <ProtectedRoute>
+                    <OrderDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="addresses"
+                element={
+                  <ProtectedRoute>
+                    <Addresses />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="rewards"
+                element={
+                  <ProtectedRoute>
+                    <RewardsCenter />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="wishlists"
+                element={
+                  <ProtectedRoute>
+                    <Wishlist />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="wishlist"
+                element={
+                  <ProtectedRoute>
+                    <Wishlist />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="wishlists/:id"
+                element={
+                  <ProtectedRoute>
+                    <WishlistDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="wishlist/share/:token" element={<SharedWishlist />} />
+              <Route
+                path="notifications"
+                element={
+                  <ProtectedRoute>
+                    <Notifications />
+                  </ProtectedRoute>
+                }
+              />
+              {user?.role === "admin" && (
+                <>
+                  <Route
+                    path="admin/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="admin/orders"
+                    element={
+                      <ProtectedRoute>
+                        <OrderManagement />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="categories/manage"
+                    element={
+                      <ProtectedRoute>
+                        <CategoryManagement />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="admin/coupons"
+                    element={
+                      <ProtectedRoute>
+                        <CouponManagement />
+                      </ProtectedRoute>
+                    }
+                  />
+                </>
+              )}
+              {user?.role === "seller" && (
+                <Route
+                  path="seller/orders"
+                  element={
+                    <ProtectedRoute>
+                      <SellerOrders />
+                    </ProtectedRoute>
+                  }
+                />
+              )}
+              <Route path="login" element={token ? <Navigate to="/" /> : <Login />} />
+              <Route
+                path="register"
+                element={token ? <Navigate to="/" /> : <Register />}
+              />
+              <Route
+                path="forgot-password"
+                element={token ? <Navigate to="/" /> : <ForgotPassword />}
+              />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Route>
+          </Routes>
+        </AnimatePresence>
       </Suspense>
       <VoiceOverlay />
       <ToastContainer />

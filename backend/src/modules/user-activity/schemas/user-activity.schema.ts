@@ -10,10 +10,10 @@ export class UserActivity {
     user: User;
 
     @Prop({ required: true })
-    action: string; // e.g. LOGIN, REGISTER, ORDER_PLACED, PROFILE_UPDATE
-
+    action: string; 
+    
     @Prop({ required: true })
-    description: string; // e.g. "Logged in from Chrome on Linux"
+    description: string; 
 
     @Prop()
     ipAddress: string;
@@ -22,7 +22,7 @@ export class UserActivity {
     userAgent: string;
 
     @Prop({ type: Object })
-    metadata: Record<string, any>; // Flexible field for extra data (orderId, etc.)
+    metadata: Record<string, any>; 
 }
 
 export const UserActivitySchema = SchemaFactory.createForClass(UserActivity);

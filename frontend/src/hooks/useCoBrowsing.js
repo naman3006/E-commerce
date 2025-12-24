@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import throttle from 'lodash.throttle';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'https://lexmark-wow-soul-yesterday.trycloudflare.com'
 
 export const useCoBrowsing = () => {
     const [socket, setSocket] = useState(null);

@@ -30,4 +30,9 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    allowedHosts: true,
+    host: true,     // 👈 important
+    port: 5173,
+  },
 })

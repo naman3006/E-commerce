@@ -1,42 +1,17 @@
 // src/components/CartItem/CartItem.js
 import React from 'react';
+import OptimizedImage from '../common/OptimizedImage';
 
 const CartItem = ({ item, onUpdate, onRemove }) => {
-  const itemId = item._id || item.id;
-
-  const handleQuantityChange = (qty) => {
-    if (itemId) {
-      onUpdate(itemId, qty);
-    }
-  };
-
-  const getImgSrc = () => {
-    // Check item.productId (populated from backend) as well as legacy checks
-    const product = item?.productId || item?.product;
-    const srcCandidate =
-      item?.image ||
-      item?.thumbnail ||
-      product?.thumbnail ||
-      (product?.images && product.images.length ? product.images[0] : null);
-
-    if (!srcCandidate) {
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect fill='%23f3f4f6' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='Arial' font-size='14'>No image</text></svg>`;
-      return `data:image/svg+xml;utf8,${svg}`;
-    }
-    let src = srcCandidate;
-    if (!/^https?:\/\//i.test(src)) {
-      if (!src.startsWith('/')) src = `/${src}`;
-    }
-    return src;
-  };
-
-  const product = item?.productId || item?.product;
-  const title = item.name || item.title || product?.title || "Unknown Product";
-
+  // ...
   return (
     <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
       <div className="flex items-center gap-4 flex-1">
-        <img src={getImgSrc()} alt={title} className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-100" onError={(e) => { e.target.onerror = null; e.target.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect fill='%23f3f4f6' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='Arial' font-size='14'>No image</text></svg>`; }} />
+        <OptimizedImage
+          src={getImgSrc()}
+          alt={title}
+          className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-100"
+        />
         <div>
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2">{title}</h3>
           <p className="text-primary-600 font-medium">₹{item.price}</p>

@@ -14,6 +14,8 @@ import { toast } from 'react-toastify';
 import ARViewer from '../components/product/ARViewer';
 import SocialProofBadge from '../components/common/SocialProofBadge';
 
+import { motion, AnimatePresence } from 'framer-motion';
+
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -34,10 +36,8 @@ const ProductDetail = () => {
     dispatch(findOneProduct(id));
     dispatch(findReviewsByProduct(id));
     dispatch(findProductRecommendations({ id, limit: 4 }));
-
   }, [dispatch, id]);
 
-  // Normalize image source: prefer `thumbnail`, then first `images` entry, then placeholder.
   const getImageSrc = () => {
     const srcCandidate = product?.thumbnail || (product?.images && product.images.length ? product.images[0] : null);
     if (!srcCandidate) {
@@ -45,24 +45,11 @@ const ProductDetail = () => {
       return `data:image/svg+xml;utf8,${svg}`;
     }
     let src = srcCandidate;
-    // If stored without protocol (relative path like "uploads/.."), ensure it starts with '/'
     if (!/^https?:\/\//i.test(src)) {
       if (!src.startsWith('/')) src = `/${src}`;
     }
     return src;
   };
-
-  // Debug: log product image fields to browser console for inspection
-  useEffect(() => {
-    if (product) {
-      // eslint-disable-next-line no-console
-      console.debug('Product image fields', {
-        id: product._id || product.id,
-        thumbnail: product.thumbnail,
-        images: product.images,
-      });
-    }
-  }, [product]);
 
   const handleAddToCart = () => {
     if (!token) {
@@ -70,25 +57,21 @@ const ProductDetail = () => {
       return;
     }
     dispatch(addToCart({ productId: id, quantity }));
+    toast.success('Added to cart!');
   };
 
   const handleWishlistToggle = async (wishlistId, isCurrentlyIn) => {
     if (!token) return;
-
-    // Toggle logic
     if (isCurrentlyIn) {
       await dispatch(removeFromWishlist({ productId: id, wishlistId }));
-      // toast.info('Removed from list');
     } else {
       await dispatch(addToWishlist({ productId: id, wishlistId }));
-      // toast.success('Added to list');
     }
   };
 
   const handleCreateAndAdd = async () => {
     if (!newWishlistName.trim()) return;
     const res = await dispatch(createWishlist(newWishlistName)).unwrap();
-    // Auto add to the new list
     await dispatch(addToWishlist({ productId: id, wishlistId: res._id }));
     setNewWishlistName('');
     toast.success('List created and item added!');
@@ -115,32 +98,68 @@ const ProductDetail = () => {
 
   if (loading || reviewsLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      <div className="flex justify-center items-center h-[60vh]">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+          className="rounded-full h-16 w-16 border-t-4 border-b-4 border-primary-600"
+        />
       </div>
     );
   }
 
   if (!product) {
-    return <div className="text-center text-gray-500">Product not found</div>;
+    return <div className="text-center text-gray-500 py-20">Product not found</div>;
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 100 }
+    }
+  };
+
   return (
-    <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
-        <div>
-          <img
-            src={getImageSrc()}
-            alt={product.title}
-            onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.jpg'; }}
-            className="w-full h-96 object-cover rounded-lg"
-          />
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="bg-white shadow-sm rounded-3xl overflow-hidden mb-10"
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 p-8 lg:p-12">
+        <motion.div variants={itemVariants} className="space-y-6">
+          <div className="relative group rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+            <motion.img
+              initial={{ scale: 1.1, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8 }}
+              src={getImageSrc()}
+              alt={product.title}
+              onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.jpg'; }}
+              className="w-full h-[500px] object-cover"
+            />
+            <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-500" />
+          </div>
+
           {product.arModelUrl && (
-            <div className="mt-6 border border-indigo-50 bg-indigo-50/30 rounded-2xl p-4">
-              <div className="flex items-center space-x-2 mb-3">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="mt-6 border border-indigo-50 bg-indigo-50/50 rounded-2xl p-6 backdrop-blur-sm"
+            >
+              <div className="flex items-center space-x-3 mb-4">
                 <span className="flex h-3 w-3 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-600"></span>
                 </span>
                 <h3 className="text-lg font-bold text-gray-900">Augmented Reality Experience</h3>
               </div>
@@ -150,208 +169,203 @@ const ProductDetail = () => {
                 placement={product.arPlacement}
                 alt={product.title}
               />
-            </div>
+            </motion.div>
           )}
-        </div>
-        <div className="space-y-6">
-          <SocialProofBadge productId={product._id} />
-          <h1 className="text-3xl font-bold text-gray-900">{product.title}</h1>
-          <p className="text-gray-600 text-lg">{product.description}</p>
-          <div className="text-2xl font-semibold text-gray-900">₹{product.price}</div>
+        </motion.div>
 
-          <div className="flex items-center space-x-4">
-            <label className="text-sm font-medium text-gray-700">Quantity:</label>
-            <input
-              type="number"
-              min="1"
-              value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value)))}
-              className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={handleAddToCart}
-              className="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 transition-colors font-semibold"
-            >
-              Add to Cart
-            </button>
-            <button
-              onClick={openWishlistModal}
-              className={`px-6 py-3 rounded-md transition-colors ${inWishlist ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-            >
-              {inWishlist ? 'Saved to Wishlist' : 'Add to Wishlist'}
-            </button>
-          </div>
-        </div>
-      </div>
+        <div className="space-y-8">
+          <motion.div variants={itemVariants}>
+            <SocialProofBadge productId={product._id} />
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mt-4 tracking-tight leading-tight">{product.title}</h1>
+            <p className="text-gray-500 text-lg mt-4 leading-relaxed max-w-2xl">{product.description}</p>
+          </motion.div>
 
-      {/* Detailed Description & Specifications */}
-      <div className="p-8 border-t border-gray-200">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Long Description */}
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900">Description</h2>
-            {product.longDescription ? (
-              <div
-                className="prose max-w-none text-gray-600"
-                dangerouslySetInnerHTML={{ __html: product.longDescription }}
+          <motion.div variants={itemVariants} className="flex items-end gap-4 border-b border-gray-100 pb-8">
+            <span className="text-4xl font-bold text-gray-900 font-display">₹{product.price}</span>
+            {product.discount > 0 && (
+              <span className="text-red-500 font-medium mb-1.5 px-2 py-0.5 bg-red-50 rounded-md text-sm">
+                Save {product.discount}%
+              </span>
+            )}
+          </motion.div>
+
+          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex items-center border border-gray-200 rounded-xl p-1 w-max">
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-colors"
+              >-</button>
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-12 text-center border-none focus:ring-0 font-bold text-gray-900 bg-transparent"
               />
-            ) : (
-              <p className="text-gray-500">No detailed description available.</p>
-            )}
-          </div>
-
-          {/* Specifications */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-900">Specifications</h2>
-            {product.specifications && product.specifications.length > 0 ? (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <dl className="space-y-3">
-                  {product.specifications.map((spec, index) => (
-                    <div key={index} className="flex justify-between border-b border-gray-200 last:border-0 pb-2 last:pb-0">
-                      <dt className="text-sm font-medium text-gray-600">{spec.key}</dt>
-                      <dd className="text-sm font-semibold text-gray-900 text-right">{spec.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">No specifications listed.</p>
-            )}
-            {/* Brand and SKU */}
-            <div className="bg-gray-50 rounded-lg p-4 mt-4">
-              <dl className="space-y-3">
-                <div className="flex justify-between">
-                  <dt className="text-sm font-medium text-gray-600">Brand</dt>
-                  <dd className="text-sm font-semibold text-gray-900 text-right">{product.brand || 'N/A'}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-sm font-medium text-gray-600">SKU</dt>
-                  <dd className="text-sm font-semibold text-gray-900 text-right">{product.sku || 'N/A'}</dd>
-                </div>
-              </dl>
+              <button
+                onClick={() => setQuantity(quantity + 1)}
+                className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-colors"
+              >+</button>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {recommendations && recommendations.length > 0 && (
-        <div className="p-8 border-t border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Bought Together</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recommendations.map((rec) => (
-              <div key={rec._id} className="animate-fade-in">
-                <ProductCard product={rec} />
+            <div className="flex gap-3 flex-1">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleAddToCart}
+                className="flex-1 bg-gray-900 text-white px-8 py-3.5 rounded-xl hover:bg-black transition-colors font-bold text-lg shadow-xl shadow-gray-200"
+              >
+                Add to Cart
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={openWishlistModal}
+                className={`px-4 py-3.5 rounded-xl transition-all border ${inWishlist ? 'bg-red-50 border-red-100 text-red-500' : 'bg-white border-gray-200 text-gray-500 hover:text-gray-900'}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${inWishlist ? 'fill-current' : 'none'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </motion.button>
+            </div>
+          </motion.div>
+
+          <motion.div variants={itemVariants} className="pt-8 grid grid-cols-2 gap-4">
+            {[
+              { icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4", text: "Free Shipping" },
+              { icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z", text: "2 Year Warranty" }
+            ].map((feat, idx) => (
+              <div key={idx} className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                <div className="p-2 bg-white rounded-lg shadow-sm">
+                  <svg className="w-5 h-5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={feat.icon} /></svg>
+                </div>
+                <span className="font-medium text-gray-900 sm:text-sm">{feat.text}</span>
               </div>
             ))}
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Details & Specs */}
+      <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 lg:grid-cols-3 gap-12 p-8 lg:p-12 border-t border-gray-100">
+        <div className="lg:col-span-2 space-y-6">
+          <h2 className="text-2xl font-bold text-gray-900">Description</h2>
+          {product.longDescription ? (
+            <div
+              className="prose prose-lg max-w-none text-gray-600 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: product.longDescription }}
+            />
+          ) : (
+            <p className="text-gray-500 italic">No detailed description available.</p>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-gray-900">Specifications</h2>
+          <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+            <dl className="space-y-4">
+              {product.specifications?.map((spec, index) => (
+                <div key={index} className="flex justify-between border-b border-gray-200 pb-2 last:border-0 last:pb-0">
+                  <dt className="text-sm font-medium text-gray-500">{spec.key}</dt>
+                  <dd className="text-sm font-semibold text-gray-900 text-right">{spec.value}</dd>
+                </div>
+              ))}
+              <div className="flex justify-between pt-2">
+                <dt className="text-sm font-medium text-gray-500">Brand</dt>
+                <dd className="text-sm font-semibold text-gray-900 text-right">{product.brand || 'N/A'}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-sm font-medium text-gray-500">SKU</dt>
+                <dd className="text-sm font-semibold text-gray-900 text-right">{product.sku || 'N/A'}</dd>
+              </div>
+            </dl>
           </div>
         </div>
+      </motion.div>
+
+      {/* Recommendations & QnA & Reviews omitted for brevity but should be wrapped similarly if needed */}
+      {recommendations && recommendations.length > 0 && (
+        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="p-8 lg:p-12 border-t border-gray-100">
+          <h2 className="text-2xl font-bold text-gray-900 mb-8">Frequently Bought Together</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {recommendations.map((rec) => (
+              <motion.div key={rec._id} whileHover={{ y: -5 }} className="h-full">
+                <ProductCard product={rec} />
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       )}
 
-      <div className="p-8 border-t border-gray-200">
+      <div className="p-8 lg:p-12 border-t border-gray-100 bg-gray-50/50">
         <QnASection productId={id} />
       </div>
 
-      <div className="p-8 border-t border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Reviews</h2>
-
-        <form onSubmit={handleSubmitReview} className="mb-8 p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center space-x-2 mb-4">
-            <span className="text-sm font-medium">Rating:</span>
-            {[5, 4, 3, 2, 1].map((star) => (
-              <button
-                key={star}
-                type="button"
-                onClick={() => setRating(star)}
-                className={`text-2xl ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
-              >
-                ★
+      <div className="p-8 lg:p-12 border-t border-gray-100">
+        <h2 className="text-2xl font-bold text-gray-900 mb-8">Reviews</h2>
+        <form onSubmit={handleSubmitReview} className="mb-10 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="flex gap-2 mb-4">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button type="button" key={star} onClick={() => setRating(star)} className="text-2xl transition-transform hover:scale-110 focus:outline-none">
+                <span className={rating >= star ? 'text-yellow-400' : 'text-gray-200'}>★</span>
               </button>
             ))}
           </div>
           <textarea
             value={reviewText}
             onChange={(e) => setReviewText(e.target.value)}
-            placeholder="Write your review..."
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="What did you like or dislike?"
+            className="w-full p-4 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-100 text-gray-900 placeholder-gray-400"
             rows="3"
           />
-          <button
-            type="submit"
-            className="mt-4 bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors"
-          >
-            Submit Review
-          </button>
+          <button type="submit" className="mt-4 px-6 py-2 bg-gray-900 text-white font-bold rounded-lg text-sm hover:bg-black transition-colors">Submit Review</button>
         </form>
-        <div className="space-y-4">
-          {reviews.map((review) => (
-            <ReviewCard key={review._id || review.id} review={review} />
-          ))}
+        <div className="grid gap-6">
+          {reviews.map(review => <ReviewCard key={review._id || review.id} review={review} />)}
         </div>
       </div>
 
-      {/* Wishlist Selection Modal */}
-      {showWishlistModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl transform transition-all scale-100">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Manage Wishlists</h3>
-              <button onClick={() => setShowWishlistModal(false)} className="text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-
-            <div className="space-y-3 max-h-60 overflow-y-auto mb-6 px-1">
-              {allWishlists.length === 0 && <p className="text-gray-500 text-center py-4">No wishlists yet.</p>}
-
-              {allWishlists.map(list => {
-                const isAlreadyIn = list.items
-                  ? list.items.some(item => (item.productId._id || item.productId) === product._id)
-                  : list.productIds?.some(p => (typeof p === 'string' ? p : p._id) === product._id);
-
-                const count = list.items ? list.items.length : (list.productIds?.length || 0);
-
-                return (
-                  <div
-                    key={list._id}
-                    className="flex items-center p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => handleWishlistToggle(list._id, isAlreadyIn)}
-                  >
-                    <div className={`w-5 h-5 rounded border flex items-center justify-center mr-3 transition-colors ${isAlreadyIn ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 bg-white'}`}>
-                      {isAlreadyIn && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                    </div>
-                    <div className="flex-1">
-                      <p className={`font-medium ${isAlreadyIn ? 'text-indigo-900' : 'text-gray-700'}`}>{list.name}</p>
-                      <p className="text-xs text-gray-400">{count} items</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="border-t pt-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Create New List</p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Name (e.g. Birthday)"
-                  className="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                  value={newWishlistName}
-                  onChange={(e) => setNewWishlistName(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleCreateAndAdd()}
-                />
-                <button
-                  onClick={handleCreateAndAdd}
-                  disabled={!newWishlistName.trim()}
-                  className="px-4 py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Create
+      <AnimatePresence>
+        {showWishlistModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Manage Wishlists</h3>
+                <button onClick={() => setShowWishlistModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+
+              <div className="space-y-3 max-h-[300px] overflow-y-auto mb-6 pr-2 custom-scrollbar">
+                {allWishlists.length === 0 && <p className="text-center text-gray-400 py-4">No wishlists created yet.</p>}
+                {allWishlists.map(list => {
+                  const isAlreadyIn = list.items ? list.items.some(item => (item.productId._id || item.productId) === product._id) : list.productIds?.some(p => (typeof p === 'string' ? p : p._id) === product._id);
+                  return (
+                    <div key={list._id} onClick={() => handleWishlistToggle(list._id, isAlreadyIn)} className={`flex items-center p-4 rounded-xl border transition-all cursor-pointer ${isAlreadyIn ? 'border-indigo-500 bg-indigo-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <div className={`w-5 h-5 rounded-md flex items-center justify-center mr-3 transition-colors ${isAlreadyIn ? 'bg-indigo-500 text-white' : 'bg-gray-200'}`}>
+                        {isAlreadyIn && <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                      </div>
+                      <span className={`font-semibold ${isAlreadyIn ? 'text-indigo-900' : 'text-gray-700'}`}>{list.name}</span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="flex gap-2">
+                <input type="text" placeholder="New list name" className="flex-1 bg-gray-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-100" value={newWishlistName} onChange={(e) => setNewWishlistName(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleCreateAndAdd()} />
+                <button onClick={handleCreateAndAdd} disabled={!newWishlistName.trim()} className="px-5 py-2 bg-black text-white rounded-xl font-bold text-sm disabled:opacity-50">Create</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

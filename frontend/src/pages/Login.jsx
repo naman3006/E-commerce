@@ -49,24 +49,32 @@ const Login = () => {
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="max-w-md w-full space-y-8 relative z-10"
       >
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/10">
+        <div className="bg-white/10 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl border border-white/20 relative overflow-hidden">
+          {/* Shine Effect */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
           <div>
             <motion.h2
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mt-2 text-center text-4xl font-black text-white tracking-tight"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="mt-2 text-center text-4xl font-black text-white tracking-tight drop-shadow-sm"
             >
               {show2FA ? t('auth.two_factor_title') : t('auth.login_title')}
             </motion.h2>
-            <p className="mt-2 text-center text-sm text-gray-300">
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="mt-2 text-center text-sm text-gray-200 font-light"
+            >
               {show2FA ? 'Enter the code from your authenticator app' : 'Welcome back! Please enter your details.'}
-            </p>
+            </motion.p>
           </div>
 
           {error && (
@@ -80,13 +88,14 @@ const Login = () => {
           )}
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="popLayout" initial={false}>
               {!show2FA ? (
                 <motion.div
                   key="login-form"
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -50 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
+                  exit={{ opacity: 0, x: 50 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   className="space-y-4"
                 >
                   <div className="relative group">
@@ -95,13 +104,13 @@ const Login = () => {
                       required
                       value={loginData.email}
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                      className="block w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-white/10 transition-all peer"
+                      className="block w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent focus:bg-white/10 transition-all peer"
                       placeholder="Email"
                       id="email"
                     />
                     <label
                       htmlFor="email"
-                      className="absolute left-4 top-4 text-gray-400 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-4 peer-focus:-top-2.5 peer-focus:text-indigo-300 peer-focus:text-xs peer-focus:bg-indigo-900/50 peer-focus:px-2 rounded peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-indigo-900/50 peer-not-placeholder-shown:px-2"
+                      className="absolute left-4 top-4 text-gray-400 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-4 peer-focus:-top-2.5 peer-focus:text-indigo-300 peer-focus:text-xs peer-focus:bg-indigo-900/50 peer-focus:px-2 rounded peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-indigo-900/50 peer-not-placeholder-shown:px-2 pointer-events-none"
                     >
                       {t('auth.email_placeholder')}
                     </label>
@@ -113,20 +122,20 @@ const Login = () => {
                       required
                       value={loginData.password}
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                      className="block w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-white/10 transition-all peer pr-10"
+                      className="block w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent focus:bg-white/10 transition-all peer pr-10"
                       placeholder="Password"
                       id="password"
                     />
                     <label
                       htmlFor="password"
-                      className="absolute left-4 top-4 text-gray-400 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-4 peer-focus:-top-2.5 peer-focus:text-indigo-300 peer-focus:text-xs peer-focus:bg-indigo-900/50 peer-focus:px-2 rounded peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-indigo-900/50 peer-not-placeholder-shown:px-2"
+                      className="absolute left-4 top-4 text-gray-400 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-4 peer-focus:-top-2.5 peer-focus:text-indigo-300 peer-focus:text-xs peer-focus:bg-indigo-900/50 peer-focus:px-2 rounded peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:bg-indigo-900/50 peer-not-placeholder-shown:px-2 pointer-events-none"
                     >
                       {t('auth.password_placeholder')}
                     </label>
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-white transition-colors focus:outline-none"
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-white transition-colors focus:outline-none z-10"
                     >
                       {!showPassword ? (
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -144,9 +153,10 @@ const Login = () => {
               ) : (
                 <motion.div
                   key="2fa-form"
-                  initial={{ opacity: 0, x: 20 }}
+                  initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   className="space-y-4"
                 >
                   <label htmlFor="2fa-code" className="sr-only">2FA Code</label>
@@ -156,7 +166,7 @@ const Login = () => {
                     required
                     value={loginData.twoFactorAuthenticationCode}
                     onChange={(e) => setLoginData({ ...loginData, twoFactorAuthenticationCode: e.target.value })}
-                    className="block w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-white/10 transition-all text-center tracking-[1em] text-2xl font-mono"
+                    className="block w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent focus:bg-white/10 transition-all text-center tracking-[1em] text-2xl font-mono"
                     placeholder="000000"
                     maxLength={6}
                     autoFocus
@@ -194,28 +204,28 @@ const Login = () => {
               <div className="flex gap-3">
                 {show2FA && (
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.02, backgroundColor: "rgba(255, 255, 255, 0.2)" }}
                     whileTap={{ scale: 0.98 }}
                     type="button"
                     onClick={() => {
                       setShow2FA(false);
                       setLoginData({ ...loginData, twoFactorAuthenticationCode: '' });
                     }}
-                    className="flex-1 py-4 px-4 border border-white/20 text-sm font-bold rounded-xl text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+                    className="flex-1 py-4 px-4 border border-white/20 text-sm font-bold rounded-xl text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all backdrop-blur-md"
                   >
                     {t('auth.cancel')}
                   </motion.button>
                 )}
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(99, 102, 241, 0.4)" }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={loading}
-                  className="flex-[2] py-4 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 shadow-lg shadow-indigo-500/30 transition-all uppercase tracking-wider"
+                  className="flex-[2] py-4 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 shadow-lg shadow-indigo-500/30 transition-all uppercase tracking-wider relative overflow-hidden"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                      <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div>
                       Processing...
                     </span>
                   ) : (show2FA ? t('auth.verify_code') : t('auth.sign_in_btn'))}

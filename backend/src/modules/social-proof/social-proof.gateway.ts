@@ -15,11 +15,11 @@ import { Logger } from '@nestjs/common';
   cors: {
     origin: '*', // Allow all for dev
   },
+  transports: ['websocket', 'polling'],
   namespace: 'social-proof',
 })
 export class SocialProofGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -28,7 +28,7 @@ export class SocialProofGateway
   // Map to track which product a socket is viewing
   private socketProductMap = new Map<string, string>();
 
-  constructor(private readonly socialProofService: SocialProofService) {}
+  constructor(private readonly socialProofService: SocialProofService) { }
 
   handleConnection(client: Socket) {
     this.logger.debug(`Client connected: ${client.id}`);

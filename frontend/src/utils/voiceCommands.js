@@ -175,7 +175,7 @@ export const processVoiceCommand = (transcript, navigate, extraContext = {}) => 
 
     if (searchQuery.length > 1) {
         navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
-        return { matched: true, feedback: `Searching for "${searchQuery}"` };
+        return { matched: true, isSearchFallback: true, feedback: `Searching for "${searchQuery}"` };
     }
 
     return { matched: false, feedback: null };

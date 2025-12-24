@@ -11,6 +11,7 @@ import {
 import { AppModule } from './app.module';
 import { TransFormInterceptor } from './common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { SocketAdapter } from './common/adapters/socket.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -24,7 +25,8 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    // origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: "*",
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
@@ -43,10 +45,12 @@ async function bootstrap() {
     new HttpExceptionFilter(),
     new I18nValidationExceptionFilter({ detailedErrors: false }),
   );
+  app.useWebSocketAdapter(new SocketAdapter(app));
+
 
   const port = app.get(ConfigService).get<number>('PORT') || 3000;
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`🚀 Application is running on: http://localhost:${port}`);
   console.log(`📁 Static files served from: /uploads/`);
 }

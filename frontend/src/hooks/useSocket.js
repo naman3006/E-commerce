@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'https://lexmark-wow-soul-yesterday.trycloudflare.com';
 
 export const useSocket = (namespace = '') => {
     const socketRef = useRef(null);
@@ -16,6 +16,8 @@ export const useSocket = (namespace = '') => {
         socketRef.current = io(url, {
             transports: ['websocket'],
             autoConnect: true,
+            reconnectionAttempts: 5,
+            timeout: 10000,
         });
 
         const socket = socketRef.current;
