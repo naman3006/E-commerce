@@ -13,7 +13,7 @@ services:
         sync: false
     autoDeploy: false
 
-  - type: static
+  - type: web
     name: voxmarket-frontend
     env: static
     root: frontend
