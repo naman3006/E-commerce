@@ -9,6 +9,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22.16.0
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
       - key: PORT
         sync: false
     autoDeploy: false
