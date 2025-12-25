@@ -1,20 +1,41 @@
 // src/components/CartItem/CartItem.js
 import React from 'react';
 import OptimizedImage from '../common/OptimizedImage';
+import { getOptimizedImageUrl } from '../../utils/urlUtils';
 
 const CartItem = ({ item, onUpdate, onRemove }) => {
-  // ...
+  // Extract product details from the nested productId object if it exists (populated)
+  // otherwise fallback to item properties (legacy support)
+  const product = item.productId || {};
+  const title = product.title || item.title || 'Product';
+  // Price and quantity are stored on the cart item itself
+  const { price, quantity } = item;
+
+  const itemId = item._id || item.id || product._id; // Handle different ID locations
+
+  const handleQuantityChange = (newQty) => {
+    onUpdate(itemId, newQty);
+  };
+
+  // Helper to get image from product details
+  const imageSrc = getOptimizedImageUrl(
+    product.thumbnail ||
+    (product.images && product.images[0]) ||
+    item.thumbnail ||
+    (item.images && item.images[0])
+  );
+
   return (
     <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
       <div className="flex items-center gap-4 flex-1">
         <OptimizedImage
-          src={getImgSrc()}
+          src={imageSrc}
           alt={title}
           className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-100"
         />
         <div>
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2">{title}</h3>
-          <p className="text-primary-600 font-medium">₹{item.price}</p>
+          <p className="text-primary-600 font-medium">₹{price}</p>
         </div>
       </div>
 

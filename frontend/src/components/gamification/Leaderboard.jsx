@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getLeaderboard } from '../../store/slices/gamificationSlice';
+import { getOptimizedImageUrl } from '../../utils/urlUtils';
 
 const Leaderboard = () => {
     const dispatch = useDispatch();
@@ -57,7 +58,7 @@ const Leaderboard = () => {
                                     <div className="relative">
                                         <div className="w-12 h-12 rounded-full bg-gray-100 p-0.5 border-2 border-white shadow-sm overflow-hidden">
                                             {entry.user.avatar ? (
-                                                <img src={entry.user.avatar} alt="" className="w-full h-full object-cover rounded-full" />
+                                                <img src={getOptimizedImageUrl(entry.user.avatar)} alt="" className="w-full h-full object-cover rounded-full" />
                                             ) : (
                                                 <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
                                                     {entry.user.name?.[0] || 'U'}

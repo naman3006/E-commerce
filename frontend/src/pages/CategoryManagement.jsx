@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { findAllCategories, createCategory } from '../store/slices/categoriesSlice';
 import { toast } from 'react-toastify';
+import { getOptimizedImageUrl } from '../utils/urlUtils';
 
 const CategoryManagement = () => {
     const dispatch = useDispatch();
@@ -121,7 +122,7 @@ const CategoryManagement = () => {
                         <div key={category._id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col">
                             <div className="flex items-center space-x-4">
                                 {category.image ? (
-                                    <img src={category.image} alt={category.name} className="h-16 w-16 object-cover rounded-md" />
+                                    <img src={getOptimizedImageUrl(category.image)} alt={category.name} className="h-16 w-16 object-cover rounded-md" />
                                 ) : (
                                     <div className="h-16 w-16 bg-gray-100 rounded-md flex items-center justify-center text-gray-400">
                                         <span className="text-2xl">📁</span>

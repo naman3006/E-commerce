@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { AddShoppingCart, DeleteOutline, SentimentDissatisfied } from '@mui/icons-material';
+import { getOptimizedImageUrl } from '../../utils/urlUtils';
 
 const WishlistCard = ({ product, onAddToCart, onRemove }) => {
     const {
@@ -19,7 +20,7 @@ const WishlistCard = ({ product, onAddToCart, onRemove }) => {
 
     const displayId = _id || id;
     const displayName = title || name || 'Unnamed Product';
-    const displayImage = thumbnail || (images && images[0]) || '/placeholder.jpg';
+    const displayImage = getOptimizedImageUrl(thumbnail || (images && images[0]) || '/placeholder.jpg');
     const displayPrice = price ? `₹${price.toFixed(2)}` : 'N/A';
     const isOutOfStock = stock <= 0 || stockStatus === 'out-of-stock';
 

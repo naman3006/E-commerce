@@ -7,7 +7,7 @@ import * as path from 'path';
 
 @Injectable()
 export class UploadService {
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) { }
 
   async optimizeImage(
     filePath: string,
@@ -94,32 +94,28 @@ export class UploadService {
         // Create thumbnail
         const thumbnailPath = await this.createThumbnail(optimizedPath);
 
-        // Convert to URL paths
-        const baseUrl = this.configService.get<string>(
-          'BASE_URL',
-          'http://localhost:3000',
-        );
+        // Return relative path instead of absolute URL
+        // The frontend will prepend the correct API_URL
+        const uploadsIndex = optimizedPath.lastIndexOf('uploads');
+        let relativePath = optimizedPath;
 
-        // Extract relative path starting from 'uploads/' to avoid absolute path in URL
-        const uploadsIndex = optimizedPath.indexOf('uploads');
+        if (uploadsIndex > -1) {
+          relativePath = optimizedPath.substring(uploadsIndex).replace(/\\/g, '/');
+        } else {
+          relativePath = optimizedPath.replace(/\\/g, '/');
+        }
 
-        const relativePath =
-          uploadsIndex > -1
-            ? optimizedPath.substring(uploadsIndex).replace(/\\/g, '/')
-            : optimizedPath.replace(/\\/g, '/');
-
-        const imageUrl = `${baseUrl}/${relativePath}`;
+        const imageUrl = relativePath;
 
         // Also extract relative path for thumbnail
         let thumbnailUrl = imageUrl;
         if (thumbnailPath) {
-          const thumbnailRelativePath =
-            thumbnailPath.indexOf('uploads') > -1
-              ? thumbnailPath
-                  .substring(thumbnailPath.indexOf('uploads'))
-                  .replace(/\\/g, '/')
-              : thumbnailPath.replace(/\\/g, '/');
-          thumbnailUrl = `${baseUrl}/${thumbnailRelativePath}`;
+          const thumbnailUploadsIndex = thumbnailPath.lastIndexOf('uploads');
+          if (thumbnailUploadsIndex > -1) {
+            thumbnailUrl = thumbnailPath.substring(thumbnailUploadsIndex).replace(/\\/g, '/');
+          } else {
+            thumbnailUrl = thumbnailPath.replace(/\\/g, '/');
+          }
         }
 
         images.push(imageUrl);

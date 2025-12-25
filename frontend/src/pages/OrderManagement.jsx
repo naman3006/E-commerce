@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import OrderStatusModal from '../components/Admin/OrderStatusModal';
 import { useSocket } from '../contexts/SocketContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getOptimizedImageUrl } from '../utils/urlUtils';
 
 const OrderManagement = () => {
     const dispatch = useDispatch();
@@ -346,7 +347,7 @@ const OrderManagement = () => {
                                                 {selectedOrder.items?.map((item, index) => (
                                                     <div key={index} className="flex gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
                                                         <img
-                                                            src={item.productImage || item.productId?.images?.[0] || 'https://via.placeholder.com/80'}
+                                                            src={getOptimizedImageUrl(item.productImage || item.productId?.images?.[0] || 'https://via.placeholder.com/80')}
                                                             alt={item.productName}
                                                             className="w-20 h-20 object-cover rounded-lg bg-gray-50"
                                                         />

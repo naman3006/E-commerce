@@ -7,6 +7,7 @@ import useVoiceNavigation from '../../hooks/useVoiceNavigation';
 import LanguageSwitcher from '../LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getOptimizedImageUrl } from '../../utils/urlUtils';
 
 const Navbar = () => {
     const dispatch = useDispatch();
@@ -259,7 +260,7 @@ const Navbar = () => {
                                     >
                                         <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold border-2 border-primary-200 overflow-hidden">
                                             {user.avatar ? (
-                                                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                                <img src={getOptimizedImageUrl(user.avatar)} alt={user.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 user?.name?.charAt(0).toUpperCase()
                                             )}
@@ -372,7 +373,7 @@ const Navbar = () => {
                                                 onClick={() => setIsMobileMenuOpen(false)}
                                             >
                                                 <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
-                                                    {user.avatar ? <img src={user.avatar} className="w-full h-full rounded-full object-cover" /> : user.name?.charAt(0)}
+                                                    {user.avatar ? <img src={getOptimizedImageUrl(user.avatar)} className="w-full h-full rounded-full object-cover" /> : user.name?.charAt(0)}
                                                 </div>
                                                 <div>
                                                     <p className="font-medium text-gray-900">{user.name}</p>

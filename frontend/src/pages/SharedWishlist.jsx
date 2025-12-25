@@ -4,6 +4,7 @@ import api from '../store/api/api';
 import { toast } from 'react-toastify';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '../store/slices/cartSlice';
+import { getOptimizedImageUrl } from '../utils/urlUtils';
 
 const SharedWishlist = () => {
     const { token } = useParams();
@@ -97,7 +98,7 @@ const SharedWishlist = () => {
 
                             <div className="aspect-[4/3] bg-gray-100 rounded-xl mb-4 overflow-hidden relative">
                                 {product.images?.[0] ? (
-                                    <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
+                                    <img src={getOptimizedImageUrl(product.images[0])} alt={product.title} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">No Image</div>
                                 )}

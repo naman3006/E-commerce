@@ -13,6 +13,7 @@ import { addToCart } from '../store/slices/cartSlice';
 import { toast } from 'react-toastify';
 import ARViewer from '../components/product/ARViewer';
 import SocialProofBadge from '../components/common/SocialProofBadge';
+import { getOptimizedImageUrl } from '../utils/urlUtils';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -44,11 +45,7 @@ const ProductDetail = () => {
       const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='400'><rect fill='%23f3f4f6' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='Arial' font-size='20'>No image</text></svg>`;
       return `data:image/svg+xml;utf8,${svg}`;
     }
-    let src = srcCandidate;
-    if (!/^https?:\/\//i.test(src)) {
-      if (!src.startsWith('/')) src = `/${src}`;
-    }
-    return src;
+    return getOptimizedImageUrl(srcCandidate);
   };
 
   const handleAddToCart = () => {

@@ -5,6 +5,7 @@ import { findSellerOrders } from '../store/slices/ordersSlice';
 import { selectUser } from '../store/slices/authSlice';
 import { toast } from 'react-toastify';
 import api from '../store/api/api';
+import { getOptimizedImageUrl } from '../utils/urlUtils';
 
 const SellerOrders = () => {
     const dispatch = useDispatch();
@@ -303,7 +304,7 @@ const SellerOrders = () => {
                                         <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
                                             <div className="flex items-center space-x-4">
                                                 {item.productImage && (
-                                                    <img src={item.productImage} alt={item.productName} className="w-16 h-16 object-cover rounded" />
+                                                    <img src={getOptimizedImageUrl(item.productImage)} alt={item.productName} className="w-16 h-16 object-cover rounded" />
                                                 )}
                                                 <div>
                                                     <p className="font-medium">{item.productName || item.productId?.title || 'Product'}</p>
@@ -331,7 +332,7 @@ const SellerOrders = () => {
                                                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                                     <div className="flex items-center space-x-4">
                                                         {item.productImage && (
-                                                            <img src={item.productImage} alt={item.productName} className="w-16 h-16 object-cover rounded" />
+                                                            <img src={getOptimizedImageUrl(item.productImage)} alt={item.productName} className="w-16 h-16 object-cover rounded" />
                                                         )}
                                                         <div>
                                                             <p className="font-medium">{item.productName || item.productId?.title || 'Product'}</p>

@@ -1,5 +1,6 @@
 // src/components/ProductList/ProductList.jsx
 import React from 'react';
+import { getOptimizedImageUrl } from '../../utils/urlUtils';
 
 const ProductList = ({ products, onEdit, onDelete }) => {
     const getImgSrc = (product) => {
@@ -8,11 +9,7 @@ const ProductList = ({ products, onEdit, onDelete }) => {
             const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect fill='%23f3f4f6' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='Arial' font-size='14'>No image</text></svg>`;
             return `data:image/svg+xml;utf8,${svg}`;
         }
-        let src = srcCandidate;
-        if (!/^https?:\/\//i.test(src)) {
-            if (!src.startsWith('/')) src = `/${src}`;
-        }
-        return src;
+        return getOptimizedImageUrl(srcCandidate);
     };
     if (!products || products.length === 0) {
         return (
@@ -115,7 +112,7 @@ const ProductList = ({ products, onEdit, onDelete }) => {
                                     >
                                         Edit
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => onDelete(product._id)}
                                         className="text-red-600 hover:text-red-900"
                                     >

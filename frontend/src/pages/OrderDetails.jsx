@@ -6,6 +6,7 @@ import OrderTimeline from '../components/Order/OrderTimeline';
 import { toast } from 'react-toastify';
 import { useSocket } from '../contexts/SocketContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getOptimizedImageUrl } from '../utils/urlUtils';
 
 const OrderDetails = () => {
     const { id } = useParams();
@@ -187,7 +188,7 @@ const OrderDetails = () => {
                                         <div className="w-24 h-24 rounded-xl bg-gray-100 p-2 flex-shrink-0 border border-gray-200">
                                             {item.productImage || item.productId?.images?.[0] ? (
                                                 <img
-                                                    src={item.productImage || item.productId?.images?.[0]}
+                                                    src={getOptimizedImageUrl(item.productImage || item.productId?.images?.[0])}
                                                     alt={item.productName}
                                                     className="w-full h-full object-contain mix-blend-multiply"
                                                 />

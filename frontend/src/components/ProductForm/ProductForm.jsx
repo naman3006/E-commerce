@@ -2,6 +2,7 @@
 // src/components/ProductForm/ProductForm.jsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "react-toastify";
+import { getOptimizedImageUrl } from "../../utils/urlUtils";
 
 const ProductForm = ({ product, categories, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -193,7 +194,7 @@ const ProductForm = ({ product, categories, onSubmit, onCancel }) => {
   }, []);
 
   // Variant and spec handlers (unchanged)
-  
+
   const addVariant = () => {
     if (variantName && variantOptions) {
       const options = variantOptions
@@ -434,9 +435,8 @@ const ProductForm = ({ product, categories, onSubmit, onCancel }) => {
               value={formData.categoryId}
               onChange={handleChange}
               required
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                categoryError ? "border-red-500 bg-red-50" : "border-gray-300"
-              }`}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${categoryError ? "border-red-500 bg-red-50" : "border-gray-300"
+                }`}
             >
               <option value="" disabled>
                 Select a category
@@ -640,7 +640,7 @@ const ProductForm = ({ product, categories, onSubmit, onCancel }) => {
               Current Thumbnail
             </label>
             <img
-              src={formData.thumbnail}
+              src={getOptimizedImageUrl(formData.thumbnail)}
               alt="Current Thumbnail"
               className="w-32 h-32 object-cover rounded border"
             />
@@ -696,7 +696,7 @@ const ProductForm = ({ product, categories, onSubmit, onCancel }) => {
               {formData.images.map((img, index) => (
                 <div key={index} className="relative group">
                   <img
-                    src={img}
+                    src={getOptimizedImageUrl(img)}
                     alt={`Current Product ${index + 1}`}
                     className="w-20 h-20 object-cover rounded border"
                   />
@@ -719,9 +719,8 @@ const ProductForm = ({ product, categories, onSubmit, onCancel }) => {
             New Additional Images (optional)
           </label>
           <div
-            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-              dragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
-            }`}
+            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+              }`}
             onDrop={handleFileDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -982,8 +981,8 @@ const ProductForm = ({ product, categories, onSubmit, onCancel }) => {
           {uploadProgress > 0
             ? `Uploading... ${Math.round(uploadProgress)}%`
             : product
-            ? "Update Product"
-            : "Create Product"}
+              ? "Update Product"
+              : "Create Product"}
         </button>
       </div>
     </form>
