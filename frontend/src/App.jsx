@@ -38,6 +38,7 @@ const CouponManagement = lazy(() => import("./components/CouponManagement/Coupon
 const RewardsCenter = lazy(() => import("./pages/RewardsCenter"));
 const WishlistDetail = lazy(() => import("./pages/WishlistDetail"));
 const SharedWishlist = lazy(() => import("./pages/SharedWishlist"));
+
 import { getProfile } from "./store/slices/authSlice";
 import { findWishlist } from "./store/slices/wishlistSlice";
 import { getGamificationProfile } from "./store/slices/gamificationSlice";
@@ -133,10 +134,6 @@ const App = () => {
       };
     }
   }, [socket, dispatch]);
-
-
-
-  // ... imports
 
   return (
     <div>

@@ -3,8 +3,8 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import './AnalyticsDashboard.css';
 
-// const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-const API_URL = import.meta.env.VITE_API_URL || 'https://lexmark-wow-soul-yesterday.trycloudflare.com';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// const API_URL = import.meta.env.VITE_API_URL || 'https://lexmark-wow-soul-yesterday.trycloudflare.com';
 
 
 const AnalyticsDashboard = () => {

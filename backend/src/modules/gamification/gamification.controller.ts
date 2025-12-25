@@ -22,6 +22,16 @@ export class GamificationController {
     return this.gamificationService.spinWheel(req.user.id);
   }
 
+  @Get('spin-config')
+  async getSpinConfig() {
+    return this.gamificationService.getSpinConfig();
+  }
+
+  @Post('reset-spin')
+  async resetSpin(@Request() req) {
+    return this.gamificationService.resetDailySpin(req.user.id);
+  }
+
   @Post('scratch')
   async scratchCard(@Request() req) {
     return this.gamificationService.scratchCard(req.user.id);

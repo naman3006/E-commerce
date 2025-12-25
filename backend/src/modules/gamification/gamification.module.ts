@@ -11,6 +11,7 @@ import {
   GamificationActivitySchema,
 } from './schemas/gamification-activity.schema';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
+import { CouponsModule } from '../coupons/coupons.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { LoyaltyModule } from '../loyalty/loyalty.module';
       { name: GamificationActivity.name, schema: GamificationActivitySchema },
     ]),
     LoyaltyModule,
+    CouponsModule,
   ],
   controllers: [GamificationController],
   providers: [GamificationService],

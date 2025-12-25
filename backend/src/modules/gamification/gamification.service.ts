@@ -11,6 +11,7 @@ import {
 } from './schemas/gamification-activity.schema';
 import { LoyaltyService } from '../loyalty/loyalty.service';
 import { User } from '../auth/schemas/user.schema';
+import { CouponsService } from '../coupons/coupons.service';
 
 @Injectable()
 export class GamificationService {
@@ -20,6 +21,7 @@ export class GamificationService {
     @InjectModel(GamificationActivity.name)
     private activityModel: Model<GamificationActivityDocument>,
     private loyaltyService: LoyaltyService,
+    private couponsService: CouponsService,
   ) { }
 
   async getProfile(userId: string): Promise<GamificationProfileDocument> {
@@ -115,6 +117,30 @@ export class GamificationService {
     };
   }
 
+  // FOR TESTING ONLY
+  async resetDailySpin(userId: string) {
+    const profile = await this.getProfile(userId);
+    profile.lastSpinDate = null;
+    await profile.save();
+    return { message: 'Daily spin reset successfully' };
+  }
+
+  // Placeholder for dynamic rewards - eventually could be moved to DB
+  private getSpinWheelRewards() {
+    return [
+      { id: 'reward_50_pts', label: '50 Points', type: 'point', value: 50, prob: 0.05, color: '#8b5cf6' },
+      { id: 'reward_20_pts', label: '20 Points', type: 'point', value: 20, prob: 0.15, color: '#ec4899' },
+      { id: 'reward_10_pts', label: '10 Points', type: 'point', value: 10, prob: 0.3, color: '#3b82f6' },
+      { id: 'reward_coupon_10', label: '10% OFF Coupon', type: 'coupon', value: 10, prob: 0.05, color: '#f59e0b' },
+      { id: 'reward_5_pts', label: '5 Points', type: 'point', value: 5, prob: 0.35, color: '#10b981' },
+      { id: 'reward_try_again', label: 'Try Again', type: 'none', value: 0, prob: 0.1, color: '#6b7280' },
+    ];
+  }
+
+  async getSpinConfig() {
+    return this.getSpinWheelRewards().map(({ prob, ...rest }) => rest);
+  }
+
   async spinWheel(userId: string) {
     const profile = await this.getProfile(userId);
     const now = new Date();
@@ -122,54 +148,93 @@ export class GamificationService {
     if (profile.lastSpinDate) {
       const lastSpin = new Date(profile.lastSpinDate);
       if (
-        now.getDate() === lastSpin.getDate() &&
-        now.getMonth() === lastSpin.getMonth() &&
-        now.getFullYear() === lastSpin.getFullYear()
+        // TEMPORARILY DISABLED FOR TESTING
+        // now.getDate() === lastSpin.getDate() &&
+        // now.getMonth() === lastSpin.getMonth() &&
+        // now.getFullYear() === lastSpin.getFullYear()
+        false
       ) {
         throw new BadRequestException('Already spin today!');
       }
     }
-    const rewards = [
-      { label: '50 Points', value: 50, prob: 0.1 },
-      { label: '20 Points', value: 20, prob: 0.2 },
-      { label: '10 Points', value: 10, prob: 0.3 },
-      { label: '5 Points', value: 5, prob: 0.3 },
-      { label: 'Try Again', value: 0, prob: 0.1 },
-    ];
+
+    const rewards = this.getSpinWheelRewards();
 
     const rand = Math.random();
     let cumulative = 0;
-    let selectednodes = rewards[rewards.length - 1];
+    let selectedReward = rewards[rewards.length - 1];
 
     for (const reward of rewards) {
       cumulative += reward.prob;
       if (rand <= cumulative) {
-        selectednodes = reward;
+        selectedReward = reward;
         break;
       }
     }
 
     profile.lastSpinDate = now;
-    if (selectednodes.value > 0) {
-      profile.lifetimePoints =
-        (profile.lifetimePoints || 0) + selectednodes.value;
+    let finalResult: any = { ...selectedReward };
+
+    if (selectedReward.type === 'point' && selectedReward.value > 0) {
+      profile.lifetimePoints = (profile.lifetimePoints || 0) + selectedReward.value;
       await this.loyaltyService.addPoints(
         userId,
-        selectednodes.value,
+        selectedReward.value,
         `Spin Wheel Reward`,
       );
 
       await this.logActivity(
         userId,
         'won',
-        `${selectednodes.value} Points`,
+        `${selectedReward.value} Points`,
         'SPIN',
       );
+    } else if (selectedReward.type === 'coupon') {
+      // Generate a unique coupon for the user
+      const couponCode = `SPIN-${Date.now().toString(36).toUpperCase()}`;
+      const validUntil = new Date();
+      validUntil.setDate(validUntil.getDate() + 7); // Valid for 7 days
+
+      try {
+        const coupon = await this.couponsService.create({
+          code: couponCode,
+          discountType: 'percentage', // Assuming percentage for now or based on value
+          discountValue: selectedReward.value,
+          validFrom: now,
+          validUntil: validUntil,
+          usageLimit: 1,
+          usageLimitPerUser: 1,
+          minPurchaseAmount: 0,
+          isActive: true,
+          description: `Spin Wheel Reward: ${selectedReward.label}`,
+          applicableUsers: [userId], // Restricted to this user
+        } as any, userId); // Assuming userId is the creator essentially
+
+        finalResult.couponCode = coupon.code;
+        finalResult.couponId = coupon._id;
+
+        await this.logActivity(
+          userId,
+          'won',
+          `Coupon: ${selectedReward.label}`,
+          'SPIN',
+        );
+
+      } catch (err) {
+        console.error('Failed to generate spin coupon:', err);
+        // Fallback to points? Or just log error and give nothing? 
+        // For now, let's fallback to small points to avoid user disappointment
+        const fallbackPoints = 10;
+        profile.lifetimePoints = (profile.lifetimePoints || 0) + fallbackPoints;
+        await this.loyaltyService.addPoints(userId, fallbackPoints, 'Spin Wheel Fallback');
+        finalResult = { ...rewards.find(r => r.id === 'reward_10_pts') }; // Switch result to points visually
+      }
     }
+
     await profile.save();
 
     return {
-      result: selectednodes,
+      result: finalResult,
       profile,
     };
   }

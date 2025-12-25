@@ -22,7 +22,7 @@ const ProductCard = memo(({ product }) => {
     return {
       id: product._id || product.id,
       name: product.title || product.name || 'Unnamed Product',
-      image: product.image || product.images?.[0] || '/placeholder.jpg',
+      image: product.image || product.images?.[0] || '/placeholder.svg',
       price: product.price ? `₹${product.price.toFixed(2)}` : 'N/A',
       description: (product.description || '').substring(0, 100),
       rating: product.rating || 0,

@@ -151,7 +151,7 @@ const ARViewer = ({ src, poster, alt, placement = 'floor' }) => {
             <model-viewer
                 ref={viewerRef}
                 src={src}
-                poster={poster || '/placeholder.jpg'}
+                poster={poster || '/placeholder.svg'}
                 alt={alt || "A 3D model of the product"}
                 ar
                 ar-modes="webxr scene-viewer quick-look"

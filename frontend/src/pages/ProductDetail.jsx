@@ -142,7 +142,7 @@ const ProductDetail = () => {
               transition={{ duration: 0.8 }}
               src={getImageSrc()}
               alt={product.title}
-              onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.jpg'; }}
+              onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.svg'; }}
               className="w-full h-[500px] object-cover"
             />
             <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-500" />

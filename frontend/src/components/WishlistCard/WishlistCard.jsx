@@ -20,7 +20,7 @@ const WishlistCard = ({ product, onAddToCart, onRemove }) => {
 
     const displayId = _id || id;
     const displayName = title || name || 'Unnamed Product';
-    const displayImage = getOptimizedImageUrl(thumbnail || (images && images[0]) || '/placeholder.jpg');
+    const displayImage = getOptimizedImageUrl(thumbnail || (images && images[0]) || '/placeholder.svg');
     const displayPrice = price ? `₹${price.toFixed(2)}` : 'N/A';
     const isOutOfStock = stock <= 0 || stockStatus === 'out-of-stock';
 
@@ -33,7 +33,7 @@ const WishlistCard = ({ product, onAddToCart, onRemove }) => {
                         src={displayImage}
                         alt={displayName}
                         className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700 ease-in-out"
-                        onError={(e) => { e.target.src = '/placeholder.jpg'; }}
+                        onError={(e) => { e.target.src = '/placeholder.svg'; }}
                     />
                 </Link>
                 {/* Bought Overlay */}

@@ -2,7 +2,7 @@ import axios from "axios";
 import i18n from "../../i18n";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://lexmark-wow-soul-yesterday.trycloudflare.com",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
   timeout: 10000,
 });
 

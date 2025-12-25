@@ -61,6 +61,18 @@ export const spinWheel = createAsyncThunk(
     }
 );
 
+export const getSpinConfig = createAsyncThunk(
+    "gamification/getSpinConfig",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get("/gamification/spin-config");
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(getErrorMessage(error));
+        }
+    }
+);
+
 export const scratchCard = createAsyncThunk(
     "gamification/scratchCard",
     async (_, { rejectWithValue }) => {
@@ -105,6 +117,7 @@ const gamificationSlice = createSlice({
         recentActivities: [],
         loading: false,
         spinResult: null,
+        spinConfig: [], // For dynamic rewards
         scratchResult: null,
         error: null,
     },
@@ -159,6 +172,11 @@ const gamificationSlice = createSlice({
             .addCase(spinWheel.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            // Spin Config
+            .addCase(getSpinConfig.fulfilled, (state, action) => {
+                // Assuming backend returns array of rewards
+                state.spinConfig = Array.isArray(action.payload) ? action.payload : [];
             })
             // Scratch Card
             .addCase(scratchCard.pending, (state) => {
