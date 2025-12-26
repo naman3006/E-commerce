@@ -12,49 +12,76 @@ import { Product, ProductDocument } from '../products/schemas/product.schema';
 
 @Injectable()
 export class SocialProofService implements OnModuleInit, OnModuleDestroy {
-  private redisClient: Redis;
+  private redisClient: Redis | null = null;
   private readonly logger = new Logger(SocialProofService.name);
+  private memoryCache = new Map<string, number>();
 
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     @InjectModel('Product') private productModel: Model<ProductDocument>,
   ) {
-    // Ideally this comes from ConfigService, but for now we default to localhost:6379
-    this.redisClient = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-    });
+    if (process.env.REDIS_HOST) {
+      this.redisClient = new Redis({
+        host: process.env.REDIS_HOST,
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+      });
+      this.logger.log('Social Proof Service initialized with Redis');
+    } else {
+      this.logger.warn(
+        'REDIS_HOST not defined. Social Proof Service running in memory-only mode.',
+      );
+    }
   }
 
   onModuleInit() {
-    this.logger.log('Social Proof Service initialized with Redis');
+    // Already handled in constructor
   }
 
   onModuleDestroy() {
-    this.redisClient.disconnect();
+    if (this.redisClient) {
+      this.redisClient.disconnect();
+    }
   }
 
   async incrementViewers(productId: string): Promise<number> {
     const key = `viewers:product:${productId}`;
-    const count = await this.redisClient.incr(key);
-    await this.redisClient.expire(key, 7200);
-    return count;
+    if (this.redisClient) {
+      const count = await this.redisClient.incr(key);
+      await this.redisClient.expire(key, 7200);
+      return count;
+    }
+    // Memory Fallback
+    const current = this.memoryCache.get(key) || 0;
+    this.memoryCache.set(key, current + 1);
+    return current + 1;
   }
 
   async decrementViewers(productId: string): Promise<number> {
     const key = `viewers:product:${productId}`;
-    const count = await this.redisClient.decr(key);
-    if (count < 0) {
-      await this.redisClient.set(key, 0);
-      return 0;
+    if (this.redisClient) {
+      const count = await this.redisClient.decr(key);
+      if (count < 0) {
+        await this.redisClient.set(key, 0);
+        return 0;
+      }
+      return count;
     }
-    return count;
+    // Memory Fallback
+    const current = this.memoryCache.get(key) || 0;
+    if (current > 0) {
+      this.memoryCache.set(key, current - 1);
+      return current - 1;
+    }
+    return 0;
   }
 
   async getViewers(productId: string): Promise<number> {
     const key = `viewers:product:${productId}`;
-    const count = await this.redisClient.get(key);
-    return count ? parseInt(count, 10) : 0;
+    if (this.redisClient) {
+      const count = await this.redisClient.get(key);
+      return count ? parseInt(count, 10) : 0;
+    }
+    return this.memoryCache.get(key) || 0;
   }
 
   async getProductStats(
