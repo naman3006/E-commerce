@@ -25,7 +25,7 @@ export class CartService {
     @InjectModel(Cart.name) private cartModel: Model<CartDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     @Optional() @Inject(CACHE_MANAGER) private cacheManager?: Cache,
-  ) {}
+  ) { }
 
   // ... (lines 28-215 omitted, no changes)
 
@@ -218,13 +218,15 @@ export class CartService {
         .exec();
 
       if (result.deletedCount === 0) {
-        throw new NotFoundException('Cart not found');
+        this.logger.log(`Cart already empty/not found for user: ${userId}`);
+      } else {
+        this.logger.log(`Cleared cart for user: ${userId}`);
       }
 
       this.invalidateCartCache(userId);
-      this.logger.log(`Cleared cart for user: ${userId}`);
     } catch (error) {
       this.logger.error(`Error clearing cart: ${error.message}`, error.stack);
+      // Only throw if it's potentially a system error, otherwise swallow if just not found logic (though above covers it)
       throw new BadRequestException('Failed to clear cart');
     }
   }
