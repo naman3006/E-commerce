@@ -19,7 +19,37 @@ export function setupApp(app: NestExpressApplication) {
 
     // Enable CORS
     app.enableCors({
-        origin: true,
+        origin: (origin, callback) => {
+            const allowedOrigins = [
+                'http://localhost:3000',
+                'http://localhost:5173',
+                'http://localhost:5174', // Often used by Vite
+                'https://voxmarket-backend-o8bv.onrender.com',
+            ];
+
+            // Allow requests with no origin (like mobile apps or curl requests)
+            if (!origin) return callback(null, true);
+
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            // Allow Vercel deployments (including previews)
+            if (origin.endsWith('.vercel.app')) {
+                return callback(null, true);
+            }
+
+            // Allow local network IP access for mobile testing
+            if (origin.startsWith('http://192.168.') || origin.startsWith('http://10.')) {
+                return callback(null, true);
+            }
+
+            // Defensively allow all for now if strict check fails, to debug, 
+            // OR strictly fail. Given the error, strict failing is better than invalid * response.
+            // But let's log it just in case.
+            console.log('Blocked CORS origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     });
