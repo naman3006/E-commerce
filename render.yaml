@@ -11,6 +11,8 @@ services:
         value: production
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
+      - key: MONGODB_URI
+        value: mongodb+srv://namanpatel806_db_user:naman%40123@cluster0.ciglvxg.mongodb.net/?appName=Cluster0
       - key: PORT
         sync: false
     autoDeploy: false
