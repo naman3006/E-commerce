@@ -130,7 +130,6 @@ export class CartService {
       cart.totalPrice = this.calculateTotalPrice(cart.items);
       await cart.save();
       this.invalidateCartCache(userId);
-
       return cart;
     } catch (error) {
       this.logger.error(`Error adding to cart: ${error.message}`, error.stack);

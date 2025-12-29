@@ -33,3 +33,19 @@ if (envContent !== originalContent) {
 } else {
     console.log('No issues found or already fixed.');
 }
+
+// Check REDIS_HOST and fix if placeholder
+if (envContent.includes('redis-xxxxx.render.com')) {
+    console.log('Detected placeholder REDIS_HOST. Disabling it to use local memory...');
+    // Comment out the line
+    envContent = envContent.replace(/.*redis-xxxxx\.render\.com.*/, '# REDIS_HOST=DISABLED (Placeholder detected)');
+
+    // Write changes
+    fs.writeFileSync(envPath, envContent);
+    console.log('SUCCESS: Disabled broken Redis config. App will run in memory mode.');
+} else if (envContent.includes('PORT=5173')) {
+    console.log('Detected incorrect PORT=5173 (frontend port) in backend .env. Fixing to 3000...');
+    envContent = envContent.replace('PORT=5173', 'PORT=3000');
+    fs.writeFileSync(envPath, envContent);
+    console.log('SUCCESS: Fixed PORT to 3000.');
+}

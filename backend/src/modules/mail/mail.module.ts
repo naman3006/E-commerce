@@ -11,25 +11,20 @@ import { MailService } from './mail.service';
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
-        const isDev = configService.get('NODE_ENV') !== 'production';
+        const isDev = configService.get('NODE_ENV') === 'development';
+        const isProduction = configService.get('NODE_ENV') === 'production';
+        const mailForceReal = configService.get('MAIL_FORCE_REAL') === 'true';
         const mailUser = configService.get('MAIL_USER');
+        const mailPassword = configService.get('MAIL_PASSWORD');
+
         let transportConfig: any;
 
-        // Advanced Configuration: Check for explicit credentials first
-        if (mailUser && configService.get('MAIL_PASSWORD')) {
-          transportConfig = {
-            host: configService.get('MAIL_HOST', 'smtp.gmail.com'),
-            port: configService.get('MAIL_PORT', 587),
-            secure: false, // true for 465, false for 587
-            auth: {
-              user: mailUser,
-              pass: configService.get('MAIL_PASSWORD'),
-            },
-          };
-          console.log(`[MailModule] Using configured SMTP: ${mailUser}`);
-        } else if (isDev) {
-          // Fallback to Ethereal only if no credentials provided and in DEV
+        // Logic: Use Ethereal if (Dev AND !ForceReal) OR (No Credentials Provided)
+        const useEthereal = (isDev && !mailForceReal) || (!mailUser || !mailPassword);
+
+        if (useEthereal) {
           try {
+            console.log('[MailModule] 📧 Configuring Ethereal Email...');
             const testAccount = await nodemailer.createTestAccount();
             transportConfig = {
               host: 'smtp.ethereal.email',
@@ -40,33 +35,30 @@ import { MailService } from './mail.service';
                 pass: testAccount.pass,
               },
             };
-            console.log(
-              '[MailModule] Using Ethereal Email (No credentials found in .env)',
-            );
-            console.log(`[MailModule] Ethereal Account: ${testAccount.user}`);
+            console.log('[MailModule] ✅ Using Ethereal Email for Development');
+            console.log(`[MailModule] 👤 Account: ${testAccount.user}`);
+            console.log(`[MailModule] 🔑 Password: ${testAccount.pass}`);
           } catch (err) {
-            console.error(
-              '[MailModule] Failed to create Ethereal test account',
-              err,
-            );
+            console.error('[MailModule] ❌ Failed to create Ethereal test account', err);
           }
         } else {
-          // Production or Non-Dev: Use configured credentials
+          // Use Real SMTP
           transportConfig = {
             host: configService.get('MAIL_HOST', 'smtp.gmail.com'),
             port: configService.get('MAIL_PORT', 587),
             secure: false,
             auth: {
               user: mailUser,
-              pass: configService.get('MAIL_PASSWORD'),
+              pass: mailPassword,
             },
           };
+          console.log(`[MailModule] 📨 Using Configured SMTP: ${mailUser}`);
         }
 
         return {
           transport: transportConfig,
           defaults: {
-            from: `"${configService.get('MAIL_FROM_NAME', 'E-Commerce')}" <${configService.get('MAIL_FROM', 'noreply@ecommerce.com')}>`,
+            from: `"${configService.get('MAIL_FROM_NAME', 'VoxMarket')}" <${configService.get('MAIL_FROM', 'noreply@voxmarket.com')}>`,
           },
           template: {
             dir: join(__dirname, '..', '..', 'modules', 'mail', 'templates'),

@@ -2,10 +2,11 @@
 
 # Function to kill child processes on exit
 cleanup() {
+    trap - SIGINT SIGTERM EXIT
     echo ""
     echo "🛑 Shutting down servers and tunnels..."
     # Kill all child processes in the current process group
-    kill 0
+    kill -- -$$ 2>/dev/null
     exit
 }
 
@@ -31,22 +32,22 @@ echo "✅ Backend is running."
 
 # 2. Start Backend Tunnel
 echo "🚇 [2/6] Starting Backend Tunnel..."
-# cloudflared tunnel --url http://localhost:3000 > backend_tunnel.log 2>&1 &
 cloudflared tunnel --url http://localhost:3000 --no-autoupdate > backend_tunnel.log 2>&1 &
 
 # 3. Extract Backend URL
 echo "🔍 [3/6] Fetching Backend Public URL..."
 count=0
-while ! grep -q "https://.*trycloudflare.com" backend_tunnel.log; do
+BACKEND_URL=""
+while [ -z "$BACKEND_URL" ]; do
     sleep 1
     count=$((count+1))
     if [ $count -ge 30 ]; then
         echo "❌ Timeout waiting for Cloudflare Tunnel URL. Check backend_tunnel.log"
         exit 1
     fi
+     # Grep for URL, ignoring potential color codes or extra characters
+    BACKEND_URL=$(grep -o 'https://[-a-zA-Z0-9.]*\.trycloudflare\.com' backend_tunnel.log | head -n 1)
 done
-# BACKEND_URL=$(grep -o 'https://[^ ]*\.trycloudflare\.com' backend_tunnel.log | head -n 1)
-BACKEND_URL=$(grep -m 1 -o 'https://[a-zA-Z0-9.-]*trycloudflare.com' backend_tunnel.log)
 
 echo "✅ Public Backend URL: $BACKEND_URL"
 
@@ -54,7 +55,8 @@ echo "✅ Public Backend URL: $BACKEND_URL"
 echo "🎨 [4/6] Starting Frontend (npm run dev)..."
 cd frontend
 # We override VITE_API_URL environment variable for this process
-VITE_API_URL=$BACKEND_URL npm run dev > ../frontend.log 2>&1 &
+# NODE_ENV is set to development explicitly
+VITE_API_URL=$BACKEND_URL npm run dev -- --host > ../frontend.log 2>&1 &
 cd ..
 
 echo "⏳ Waiting for Frontend to start on port 5173..."
@@ -65,23 +67,22 @@ echo "✅ Frontend is running."
 
 # 5. Start Frontend Tunnel
 echo "🚇 [5/6] Starting Frontend Tunnel..."
-# cloudflared tunnel --url http://localhost:5173 > frontend_tunnel.log 2>&1 &
 cloudflared tunnel --url http://localhost:5173 --no-autoupdate > frontend_tunnel.log 2>&1 &
 
 
 # 6. Extract Frontend URL
 echo "🔍 [6/6] Fetching Frontend Public URL..."
 count=0
-while ! grep -q "https://.*trycloudflare.com" frontend_tunnel.log; do
+FRONTEND_URL=""
+while [ -z "$FRONTEND_URL" ]; do
     sleep 1
     count=$((count+1))
     if [ $count -ge 30 ]; then
         echo "❌ Timeout waiting for Cloudflare Tunnel URL. Check frontend_tunnel.log"
         exit 1
     fi
+    FRONTEND_URL=$(grep -o 'https://[-a-zA-Z0-9.]*\.trycloudflare\.com' frontend_tunnel.log | head -n 1)
 done
-# FRONTEND_URL=$(grep -o 'https://[^ ]*\.trycloudflare\.com' frontend_tunnel.log | head -n 1)
-FRONTEND_URL=$(grep -m 1 -o 'https://[a-zA-Z0-9.-]*trycloudflare.com' frontend_tunnel.log)
 
 
 echo ""

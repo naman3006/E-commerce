@@ -39,6 +39,11 @@ export function setupApp(app: NestExpressApplication) {
                 return callback(null, true);
             }
 
+            // Allow Cloudflare Tunnels (Mobile Dev)
+            if (origin.endsWith('.trycloudflare.com')) {
+                return callback(null, true);
+            }
+
             // Allow local network IP access for mobile testing
             if (origin.startsWith('http://192.168.') || origin.startsWith('http://10.')) {
                 return callback(null, true);

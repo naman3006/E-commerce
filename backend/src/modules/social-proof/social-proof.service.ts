@@ -24,6 +24,18 @@ export class SocialProofService implements OnModuleInit, OnModuleDestroy {
       this.redisClient = new Redis({
         host: process.env.REDIS_HOST,
         port: parseInt(process.env.REDIS_PORT || '6379'),
+        retryStrategy: (times) => {
+          // Retry at most 3 times, then stop
+          if (times > 3) {
+            this.logger.warn('Redis connection failed too many times. Disabling Redis.');
+            return null;
+          }
+          return Math.min(times * 50, 2000);
+        },
+      });
+      // Prevent crash on connection error
+      this.redisClient.on('error', (err) => {
+        this.logger.error(`Redis Error: ${err.message}`);
       });
       this.logger.log('Social Proof Service initialized with Redis');
     } else {

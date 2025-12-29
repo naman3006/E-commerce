@@ -20,7 +20,7 @@ export class MailService {
   constructor(
     private mailerService: MailerService,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   /**
    * Send order confirmation to customer with order details
@@ -667,12 +667,15 @@ export class MailService {
       });
 
       let previewUrl = null;
-      if (this.isDev) {
-        // @ts-ignore
-        previewUrl = nodemailer.getTestMessageUrl(info);
-        if (previewUrl) {
-          this.logger.log(`[Ethereal] Preview URL: ${previewUrl}`);
-        }
+      // Always check for test message URL if in dev or if using ethereal
+      // @ts-ignore
+      previewUrl = nodemailer.getTestMessageUrl(info);
+
+      if (previewUrl) {
+        this.logger.log(`\n\n==================================================================`);
+        this.logger.log(`📧 ETHEREAL EMAIL PREVIEW URL (OTP):`);
+        this.logger.log(`${previewUrl}`);
+        this.logger.log(`==================================================================\n`);
       }
 
       this.logger.log(`OTP sent to ${email}`);
