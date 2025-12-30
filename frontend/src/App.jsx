@@ -315,7 +315,7 @@ const App = () => {
       <VoiceOverlay />
       <ToastContainer />
       <ActivityToast />
-      <ShopTogether
+      {/* <ShopTogether
         session={session}
         participants={participants}
         isConnected={isCoConnected}
@@ -323,7 +323,7 @@ const App = () => {
         onJoinSession={joinSession}
         onLeaveSession={leaveSession}
         onSendReaction={sendReaction}
-      />
+      /> */}
       {session && <CursorOverlay participants={participants} reactions={reactions} myId={coSocket?.id} />}
     </div >
   );

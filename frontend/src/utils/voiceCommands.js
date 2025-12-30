@@ -1,5 +1,5 @@
 export const voiceCommands = [
-    // Navigation Commands
+    // --- Navigation Commands ---
     {
         pattern: /^(go to|open|show|visit|take me to)?\s*(home|homepage)\s*$/i,
         action: (navigate) => navigate('/'),
@@ -16,14 +16,23 @@ export const voiceCommands = [
         feedback: 'Opening Wishlist',
     },
     {
-        pattern: /^(go to|open|show|visit|check)?\s*(orders|my orders|order history)\s*$/i,
+        pattern: /^(go to|open|show|visit|check)?\s*(orders|my orders|order history|my stuff)\s*$/i,
         action: (navigate) => navigate('/orders'),
         feedback: 'Opening Orders',
     },
     {
-        pattern: /^(go to|open|show|visit|my)?\s*(profile|account|my account)\s*$/i,
+        pattern: /^(go to|open|show|visit|my)?\s*(profile|account|my account|settings)\s*$/i,
         action: (navigate) => navigate('/profile'),
         feedback: 'Opening Profile',
+    },
+    {
+        pattern: /^(log out|sign out|logout|signout|leave)\s*$/i,
+        action: (navigate) => {
+            // Ideally dispatch logout, but for nav-only context:
+            navigate('/login');
+            return 'Logging out';
+        },
+        feedback: 'Logging out',
     },
     {
         pattern: /^(go to|open|show)?\s*(login|sign in|log in)\s*$/i,
@@ -41,9 +50,47 @@ export const voiceCommands = [
         feedback: 'Opening Dashboard',
     },
 
-    // Advanced Commands
+    // --- Dynamic Category Navigation ---
+    {
+        pattern: /^(show|view|open|find|go to|browse)?\s*(electronics|gadgets|fashion|clothing|men|women|home|decor|furniture|beauty|health|sports|books|toys|laptops|mobiles|phones|shoes)\s*$/i,
+        action: (navigate, transcript) => {
+            // Extract the category keyword
+            const categories = ['electronics', 'fashion', 'clothing', 'men', 'women', 'home', 'decor', 'furniture', 'beauty', 'health', 'sports', 'books', 'toys', 'laptops', 'mobiles', 'phones', 'shoes'];
+            const found = categories.find(c => transcript.toLowerCase().includes(c));
+            if (found) {
+                navigate(`/products?category=${found}`);
+                return `Showing ${found}`;
+            }
+            return 'Opening Category';
+        },
+        feedback: (transcript) => `Browsing Category`,
+    },
 
-    // 1. Theme Control
+    // --- Product Filtering & Sorting ---
+    {
+        pattern: /^(sort|order|arrange)?\s*by\s*(price|cost)\s*(low|high|cheapest|expensive)?\s*$/i,
+        action: (navigate, transcript) => {
+            if (transcript.includes('high') || transcript.includes('expensive')) {
+                navigate('/products?sort=price_desc');
+                return 'Sorting by Price High to Low';
+            }
+            navigate('/products?sort=price_asc');
+            return 'Sorting by Price Low to High';
+        },
+        feedback: 'Sorting Products',
+    },
+    {
+        pattern: /^(sort|order|arrange)?\s*by\s*(newest|latest|new)\s*$/i,
+        action: (navigate) => navigate('/products?sort=newest'),
+        feedback: 'Showing Newest Items',
+    },
+    {
+        pattern: /^(show|find)?\s*cheapest\s*(items|products|stuff)?\s*$/i,
+        action: (navigate) => navigate('/products?sort=price_asc'),
+        feedback: 'Showing Cheapest Items',
+    },
+
+    // --- Advanced Interaction ---
     {
         pattern: /^(switch to|turn on|enable|toggle|change to)?\s*(dark mode|light mode|theme|dark theme|light theme)\s*$/i,
         action: (_nav, _txt, { toggleDarkMode }) => {
@@ -55,15 +102,13 @@ export const voiceCommands = [
         },
         feedback: 'Toggling Theme',
     },
-
-    // 2. Checkout & Buying
     {
-        pattern: /^(go to|open|proceed to)?\s*(checkout|payment)\s*$/i,
+        pattern: /^(go to|open|proceed to)?\s*(checkout|payment|pay)\s*$/i,
         action: (navigate) => navigate('/checkout'),
         feedback: 'Proceeding to Checkout',
     },
 
-    // 3. General Navigation
+    // --- General Browser Control ---
     {
         pattern: /^(go|navigate)?\s*back\s*$/i,
         action: (navigate) => navigate(-1),
@@ -116,16 +161,13 @@ export const voiceCommands = [
         },
         feedback: 'Scrolling to top',
     },
-    {
-        pattern: /^(scroll|go|jump)?\s*to\s*(bottom|end)\s*$/i,
-        action: () => {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            return 'Scrolling to bottom';
-        },
-        feedback: 'Scrolling to bottom',
-    },
 
-    // Clear Cart (Example of action command)
+    // --- Help ---
+    {
+        pattern: /^(help|what can i do|commands|what can i say|options|assist me)\s*$/i,
+        action: () => 'Try saying "Show me laptops", "Sort by price", or "Go to cart"',
+        feedback: 'Showing Help',
+    },
     {
         pattern: /^(clear|empty|remove all from)?\s*(cart|basket)\s*$/i,
         action: (navigate) => {
